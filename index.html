@@ -52,30 +52,38 @@
       background: #fff;
       border: 2px solid #0078D7;
     }
+    .row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .col-6 {
+      flex: 1 1 48%;
+    }
   </style>
 </head>
 <body>
   <h2>🧾 Generador de Confirmaciones de Cita</h2>
 
   <div class="row">
-    <div class="col-12">
+    <div class="col-6">
       <label for="servicio">Servicio solicitado</label>
-      <input type="text" id="servicio" class="form-control" readonly>
+      <input type="text" id="servicio" readonly>
+    </div>
+    <div class="col-6">
+      <label for="tipoDocumento">Tipo de Documento</label>
+      <input type="text" id="tipoDocumento" readonly>
     </div>
   </div>
 
   <div class="row">
-    <div class="col-4">
-      <label for="tipoDocumento">Tipo de Documento</label>
-      <input type="text" id="tipoDocumento" class="form-control" readonly>
-    </div>
-    <div class="col-4">
+    <div class="col-6">
       <label for="numeroDocumento">Número de Documento</label>
-      <input type="text" id="numeroDocumento" class="form-control" readonly>
+      <input type="text" id="numeroDocumento" readonly>
     </div>
-    <div class="col-4">
+    <div class="col-6">
       <label for="telefono">Teléfono</label>
-      <input type="text" id="telefono" class="form-control" readonly>
+      <input type="text" id="telefono" readonly>
     </div>
   </div>
 
@@ -116,7 +124,6 @@
   <button onclick="copiarConfirmacion()">📋 Copiar Confirmación</button>
 
   <script>
-    // Obtener datos desde la URL
     const params = new URLSearchParams(window.location.search);
     const tdoc = params.get("tdoc") || "";
     const doc = params.get("doc") || "";
@@ -166,7 +173,6 @@
         const input = document.createElement("input");
         input.type = "datetime-local";
         input.classList.add("fecha-cita");
-        input.required = true;
         contenedor.appendChild(label);
         contenedor.appendChild(input);
       }
@@ -196,19 +202,12 @@
       const especialidadEl = document.getElementById("especialidad");
       const fechas = document.querySelectorAll(".fecha-cita");
 
-      [sedeEl, cantidadEl, especialidadEl].forEach(el => el.classList.remove("invalid"));
-      fechas.forEach(el => el.classList.remove("invalid"));
-
       const sede = sedeEl.value;
       const cantidad = parseInt(cantidadEl.value);
       const especialidad = especialidadEl.value;
 
       if (!sede || !cantidad || !especialidad || fechas.length !== cantidad || !imagenPegada) {
-        if (!sede) sedeEl.classList.add("invalid");
-        if (!cantidad) cantidadEl.classList.add("invalid");
-        if (!especialidad) especialidadEl.classList.add("invalid");
-        if (!imagenPegada) alert("⚠️ Debes pegar un recorte de pantalla antes de generar la confirmación.");
-        fechas.forEach(el => { if (!el.value) el.classList.add("invalid"); });
+        alert("⚠️ Por favor complete todos los campos y pegue una imagen.");
         return;
       }
 
@@ -227,8 +226,7 @@
         <p>📍 <strong>Sede:</strong> ${sede}</p>
         <p>🏢 <strong>Dirección:</strong> ${direccion}</p>
         <p>🗺️ <strong>Cómo llegar?:</strong> <a href="${mapa}" target="_blank">${mapa}</a></p>
-        <p>📅 <strong>Fechas y horas de las citas:</strong></p>
-        <p><br>${listaFechas}</p>
+        <p>📅 <strong>Fechas y horas de las citas:</strong><br>${listaFechas}</p>
         <p>🩺 <strong>Especialidad:</strong> ${especialidad}</p>
         <p>🖼️ <strong>Confirmación de Cita:</strong></p>
         <img src="${imagenPegada}" style="max-width:100%; max-height:300px; object-fit:contain; border:1px solid #ccc;">
@@ -239,29 +237,14 @@
 
     function copiarConfirmacion() {
       const output = document.getElementById("output");
-      if (!output.innerHTML.trim()) {
-        alert("⚠️ Primero debes generar la confirmación.");
-        return;
-      }
-
       const range = document.createRange();
       range.selectNode(output);
       const selection = window.getSelection();
       selection.removeAllRanges();
       selection.addRange(range);
-
-      try {
-        const successful = document.execCommand('copy');
-        if (successful) {
-          alert("✅ Confirmación copiada al portapapeles. ¡Pégala en el correo!");
-        } else {
-          alert("❌ No se pudo copiar. Intenta seleccionar manualmente.");
-        }
-      } catch (err) {
-        alert("❌ Error al copiar: " + err);
-      }
-
+      document.execCommand("copy");
       selection.removeAllRanges();
+      alert("✅ Confirmación copiada al portapapeles.");
     }
 
     function limpiarCampos() {
@@ -272,7 +255,6 @@
       document.getElementById("imageContainer").innerHTML = "Pega aquí tu imagen";
       document.getElementById("output").innerHTML = "";
       imagenPegada = null;
-      document.querySelectorAll(".invalid").forEach(el => el.classList.remove("invalid"));
     }
   </script>
 </body>
