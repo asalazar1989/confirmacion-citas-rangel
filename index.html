@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
-  <title>Generador de Confirmaciones con Datos del IVR</title>
+  <title>Generador de Confirmaciones</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -59,6 +58,13 @@
   <h2>🧾 Generador de Confirmaciones de Cita</h2>
 
   <div class="row">
+    <div class="col-12">
+      <label for="servicio">Servicio solicitado</label>
+      <input type="text" id="servicio" class="form-control" readonly>
+    </div>
+  </div>
+
+  <div class="row">
     <div class="col-4">
       <label for="tipoDocumento">Tipo de Documento</label>
       <input type="text" id="tipoDocumento" class="form-control" readonly>
@@ -72,6 +78,7 @@
       <input type="text" id="telefono" class="form-control" readonly>
     </div>
   </div>
+
   <hr>
 
   <label for="sede">Sede:</label>
@@ -109,16 +116,18 @@
   <button onclick="copiarConfirmacion()">📋 Copiar Confirmación</button>
 
   <script>
-    // Cargar datos desde la URL (ivr)
+    // Obtener datos desde la URL
     const params = new URLSearchParams(window.location.search);
     const tdoc = params.get("tdoc") || "";
     const doc = params.get("doc") || "";
     const telefono = params.get("telefono") || "";
+    const servicio = params.get("service") || "";
 
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("tipoDocumento").value = tdoc;
       document.getElementById("numeroDocumento").value = doc;
       document.getElementById("telefono").value = telefono;
+      document.getElementById("servicio").value = servicio;
     });
 
     const sedes = {
