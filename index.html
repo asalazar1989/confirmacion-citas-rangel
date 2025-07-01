@@ -1,10 +1,9 @@
 
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
-  <title>Generador de Confirmaciones</title>
+  <title>Generador de Confirmaciones con Datos del IVR</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -59,6 +58,23 @@
 <body>
   <h2>🧾 Generador de Confirmaciones de Cita</h2>
 
+  <div class="row">
+    <div class="col-4">
+      <label for="tipoDocumento">Tipo de Documento</label>
+      <input type="text" id="tipoDocumento" class="form-control" readonly>
+    </div>
+    <div class="col-4">
+      <label for="numeroDocumento">Número de Documento</label>
+      <input type="text" id="numeroDocumento" class="form-control" readonly>
+    </div>
+    <div class="col-4">
+      <label for="telefono">Teléfono</label>
+      <input type="text" id="telefono" class="form-control" readonly>
+    </div>
+  </div>
+
+  <hr>
+
   <label for="sede">Sede:</label>
   <select id="sede">
     <option value="">--Seleccione una sede--</option>
@@ -94,6 +110,18 @@
   <button onclick="copiarConfirmacion()">📋 Copiar Confirmación</button>
 
   <script>
+    // Cargar datos desde la URL (ivr)
+    const params = new URLSearchParams(window.location.search);
+    const tdoc = params.get("tdoc") || "";
+    const doc = params.get("doc") || "";
+    const telefono = params.get("telefono") || "";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("tipoDocumento").value = tdoc;
+      document.getElementById("numeroDocumento").value = doc;
+      document.getElementById("telefono").value = telefono;
+    });
+
     const sedes = {
       "Sede Américas": {
         direccion: "CL 20 (Avenida de las Américas) # 43A - 32 - Bogotá D.C.",
