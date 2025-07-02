@@ -63,7 +63,7 @@
   </style>
 </head>
 <body>
-  <h2>🗞️ Generador de Confirmaciones de Cita</h2>
+  <h2>📲 Generador de Confirmaciones de Cita</h2>
 
   <div class="row">
     <div class="col-6">
@@ -119,8 +119,9 @@
         <option value="Terapia">Terapia</option>
       </select>
     </div>
-    <div class="col-6" id="contenedorFechas"></div>
   </div>
+
+  <div class="row" id="contenedorFechas"></div>
 
   <label>📎 Pegue aquí el recorte de pantalla (Ctrl + V):</label>
   <div id="imageContainer">Pega aquí tu imagen</div>
@@ -132,21 +133,103 @@
   <button onclick="copiarConfirmacion()">📋 Copiar Confirmación</button>
 
 <script>
+let imagenPegada = null;
+
 function generarCamposFechas() {
   const cantidad = parseInt(document.getElementById("cantidad").value) || 0;
   const contenedor = document.getElementById("contenedorFechas");
   contenedor.innerHTML = "";
 
   for (let i = 0; i < cantidad; i++) {
+    const div = document.createElement("div");
+    div.className = "col-6";
+
     const label = document.createElement("label");
     label.innerText = `Fecha y hora Cita ${i + 1}:`;
     const input = document.createElement("input");
     input.type = "datetime-local";
     input.classList.add("fecha-cita");
-    contenedor.appendChild(label);
-    contenedor.appendChild(input);
+
+    div.appendChild(label);
+    div.appendChild(input);
+    contenedor.appendChild(div);
   }
+}
+
+document.addEventListener("paste", function (e) {
+  const items = e.clipboardData.items;
+  for (let item of items) {
+    if (item.type.indexOf("image") !== -1) {
+      const blob = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const img = new Image();
+        img.src = event.target.result;
+        document.getElementById("imageContainer").innerHTML = "";
+        document.getElementById("imageContainer").appendChild(img);
+        imagenPegada = img.src;
+      };
+      reader.readAsDataURL(blob);
+    }
+  }
+});
+
+function generarConfirmacion() {
+  const sede = document.getElementById("sede").value;
+  const cantidad = parseInt(document.getElementById("cantidad").value);
+  const especialidad = document.getElementById("especialidad").value;
+  const fechas = document.querySelectorAll(".fecha-cita");
+
+  if (!sede || !cantidad || !especialidad || fechas.length !== cantidad || !imagenPegada) {
+    alert("⚠️ Por favor complete todos los campos y pegue una imagen.");
+    return;
+  }
+
+  const listaFechas = Array.from(fechas).map((el, i) => {
+    const fecha = new Date(el.value);
+    const texto = fecha.toLocaleString("es-CO", {
+      weekday: "long", year: "numeric", month: "long", day: "numeric",
+      hour: "numeric", minute: "2-digit"
+    });
+    return `• Cita ${i + 1}: ${texto}`;
+  }).join("<br>");
+
+  const html = `
+    <p>📢 A continuación, le compartimos la confirmación de su cita para que pueda asistir:</p>
+    <p>📍 <strong>Sede:</strong> ${sede}</p>
+    <p>📅 <strong>Fechas y horas de las citas:</strong><br>${listaFechas}</p>
+    <p>🩺 <strong>Especialidad:</strong> ${especialidad}</p>
+    <p>🖼️ <strong>Confirmación de Cita:</strong></p>
+    <img src="${imagenPegada}" style="max-width:100%; max-height:300px; object-fit:contain; border:1px solid #ccc;">
+  `;
+
+  document.getElementById("output").innerHTML = html;
+}
+
+function copiarConfirmacion() {
+  const output = document.getElementById("output");
+  const range = document.createRange();
+  range.selectNode(output);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  document.execCommand("copy");
+  selection.removeAllRanges();
+  alert("✅ Confirmación copiada al portapapeles.");
+}
+
+function limpiarCampos() {
+  document.getElementById("sede").value = "";
+  document.getElementById("cantidad").value = "";
+  document.getElementById("especialidad").value = "";
+  document.getElementById("contenedorFechas").innerHTML = "";
+  document.getElementById("imageContainer").innerHTML = "Pega aquí tu imagen";
+  document.getElementById("output").innerHTML = "";
+  imagenPegada = null;
 }
 </script>
 </body>
 </html>
+
+
+
