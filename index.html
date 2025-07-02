@@ -63,7 +63,7 @@
   </style>
 </head>
 <body>
-  <h2>🧾 Generador de Confirmaciones de Cita</h2>
+  <h2>🗞️ Generador de Confirmaciones de Cita</h2>
 
   <div class="row">
     <div class="col-6">
@@ -89,30 +89,38 @@
 
   <hr>
 
-  <label for="sede">Sede:</label>
-  <select id="sede">
-    <option value="">--Seleccione una sede--</option>
-    <option value="Sede Américas">Sede Américas</option>
-    <option value="Piso 2 - Altos del Bosque">Piso 2 - Altos del Bosque</option>
-    <option value="Piso 5 - Forest Medical Center">Piso 5 - Forest Medical Center</option>
-    <option value="Piso 6 - Forest Medical Center">Piso 6 - Forest Medical Center</option>
-    <option value="Calle 26 - Edificio Elemento">Calle 26 - Edificio Elemento</option>
-  </select>
+  <div class="row">
+    <div class="col-6">
+      <label for="sede">Sede:</label>
+      <select id="sede">
+        <option value="">--Seleccione una sede--</option>
+        <option value="Sede Américas">Sede Américas</option>
+        <option value="Piso 2 - Altos del Bosque">Piso 2 - Altos del Bosque</option>
+        <option value="Piso 5 - Forest Medical Center">Piso 5 - Forest Medical Center</option>
+        <option value="Piso 6 - Forest Medical Center">Piso 6 - Forest Medical Center</option>
+        <option value="Calle 26 - Edificio Elemento">Calle 26 - Edificio Elemento</option>
+      </select>
+    </div>
+    <div class="col-6">
+      <label for="cantidad">Cantidad de citas a confirmar:</label>
+      <input id="cantidad" type="number" min="1" max="20" onchange="generarCamposFechas()"/>
+    </div>
+  </div>
 
-  <label for="cantidad">Cantidad de citas a confirmar:</label>
-  <input id="cantidad" type="number" min="1" max="20" onchange="generarCamposFechas()"/>
-
-  <div id="contenedorFechas"></div>
-
-  <label for="especialidad">Especialidad:</label>
-  <select id="especialidad">
-    <option value="">--Seleccione una especialidad--</option>
-    <option value="Clínica de Dolor">Clínica de Dolor</option>
-    <option value="Electrodiagnóstico">Electrodiagnóstico</option>
-    <option value="Medicina Física y Rehabilitación">Medicina Física y Rehabilitación</option>
-    <option value="Medicina Ocupacional o Laboral">Medicina Ocupacional o Laboral</option>
-    <option value="Terapia">Terapia</option>
-  </select>
+  <div class="row">
+    <div class="col-6">
+      <label for="especialidad">Especialidad:</label>
+      <select id="especialidad">
+        <option value="">--Seleccione una especialidad--</option>
+        <option value="Clínica de Dolor">Clínica de Dolor</option>
+        <option value="Electrodiagnóstico">Electrodiagnóstico</option>
+        <option value="Medicina Física y Rehabilitación">Medicina Física y Rehabilitación</option>
+        <option value="Medicina Ocupacional o Laboral">Medicina Ocupacional o Laboral</option>
+        <option value="Terapia">Terapia</option>
+      </select>
+    </div>
+    <div class="col-6" id="contenedorFechas"></div>
+  </div>
 
   <label>📎 Pegue aquí el recorte de pantalla (Ctrl + V):</label>
   <div id="imageContainer">Pega aquí tu imagen</div>
@@ -123,139 +131,22 @@
   <div contenteditable="true" id="output"></div>
   <button onclick="copiarConfirmacion()">📋 Copiar Confirmación</button>
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const tdoc = params.get("tdoc") || "";
-    const doc = params.get("doc") || "";
-    const telefono = params.get("telefono") || "";
-    const servicio = params.get("service") || "";
+<script>
+function generarCamposFechas() {
+  const cantidad = parseInt(document.getElementById("cantidad").value) || 0;
+  const contenedor = document.getElementById("contenedorFechas");
+  contenedor.innerHTML = "";
 
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("tipoDocumento").value = tdoc;
-      document.getElementById("numeroDocumento").value = doc;
-      document.getElementById("telefono").value = telefono;
-      document.getElementById("servicio").value = servicio;
-    });
-
-    const sedes = {
-      "Sede Américas": {
-        direccion: "CL 20 (Avenida de las Américas) # 43A - 32 - Bogotá D.C.",
-        mapa: "https://maps.app.goo.gl/F71EgmnxAHW5rnng6"
-      },
-      "Piso 2 - Altos del Bosque": {
-        direccion: "Calle 134 No. 7 - 83 Torre 1 Piso 2 – Bogotá D.C.",
-        mapa: "https://maps.app.goo.gl/tpn8XrrPasxwTZDYA"
-      },
-      "Piso 5 - Forest Medical Center": {
-        direccion: "Cra 7B Bis #132-38 Piso 5 – Bogotá D.C.",
-        mapa: "https://maps.app.goo.gl/Y2MEa9DV6UJaL9re6"
-      },
-      "Piso 6 - Forest Medical Center": {
-        direccion: "Cra 7B Bis #132-38 Piso 6 – Bogotá D.C.",
-        mapa: "https://maps.app.goo.gl/Y2MEa9DV6UJaL9re6"
-      },
-      "Calle 26 - Edificio Elemento": {
-        direccion: "Av Cll 26 #69-76 Torre 4 Of.1101 - 1106 – Bogotá D.C.",
-        mapa: "https://maps.app.goo.gl/fpiUpYpVzCPH5Nrt9"
-      }
-    };
-
-    let imagenPegada = null;
-
-    function generarCamposFechas() {
-      const cantidad = parseInt(document.getElementById("cantidad").value) || 0;
-      const contenedor = document.getElementById("contenedorFechas");
-      contenedor.innerHTML = "";
-
-      for (let i = 0; i < cantidad; i++) {
-        const label = document.createElement("label");
-        label.innerText = `Fecha y hora Cita ${i + 1}:`;
-        const input = document.createElement("input");
-        input.type = "datetime-local";
-        input.classList.add("fecha-cita");
-        contenedor.appendChild(label);
-        contenedor.appendChild(input);
-      }
-    }
-
-    document.addEventListener("paste", function (e) {
-      const items = e.clipboardData.items;
-      for (let item of items) {
-        if (item.type.indexOf("image") !== -1) {
-          const blob = item.getAsFile();
-          const reader = new FileReader();
-          reader.onload = function (event) {
-            const img = new Image();
-            img.src = event.target.result;
-            document.getElementById("imageContainer").innerHTML = "";
-            document.getElementById("imageContainer").appendChild(img);
-            imagenPegada = img.src;
-          };
-          reader.readAsDataURL(blob);
-        }
-      }
-    });
-
-    function generarConfirmacion() {
-      const sedeEl = document.getElementById("sede");
-      const cantidadEl = document.getElementById("cantidad");
-      const especialidadEl = document.getElementById("especialidad");
-      const fechas = document.querySelectorAll(".fecha-cita");
-
-      const sede = sedeEl.value;
-      const cantidad = parseInt(cantidadEl.value);
-      const especialidad = especialidadEl.value;
-
-      if (!sede || !cantidad || !especialidad || fechas.length !== cantidad || !imagenPegada) {
-        alert("⚠️ Por favor complete todos los campos y pegue una imagen.");
-        return;
-      }
-
-      const { direccion, mapa } = sedes[sede];
-      const listaFechas = Array.from(fechas).map((el, i) => {
-        const fecha = new Date(el.value);
-        const texto = fecha.toLocaleString("es-CO", {
-          weekday: "long", year: "numeric", month: "long", day: "numeric",
-          hour: "numeric", minute: "2-digit"
-        });
-        return `• Cita ${i + 1}: ${texto}`;
-      }).join("<br>");
-
-      const html = `
-        <p>📢 A continuación, le compartimos la confirmación de su cita para que pueda asistir:</p>
-        <p>📍 <strong>Sede:</strong> ${sede}</p>
-        <p>🏢 <strong>Dirección:</strong> ${direccion}</p>
-        <p>🗺️ <strong>Cómo llegar?:</strong> <a href="${mapa}" target="_blank">${mapa}</a></p>
-        <p>📅 <strong>Fechas y horas de las citas:</strong><br>${listaFechas}</p>
-        <p>🩺 <strong>Especialidad:</strong> ${especialidad}</p>
-        <p>🖼️ <strong>Confirmación de Cita:</strong></p>
-        <img src="${imagenPegada}" style="max-width:100%; max-height:300px; object-fit:contain; border:1px solid #ccc;">
-      `;
-
-      document.getElementById("output").innerHTML = html;
-    }
-
-    function copiarConfirmacion() {
-      const output = document.getElementById("output");
-      const range = document.createRange();
-      range.selectNode(output);
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-      document.execCommand("copy");
-      selection.removeAllRanges();
-      alert("✅ Confirmación copiada al portapapeles.");
-    }
-
-    function limpiarCampos() {
-      document.getElementById("sede").value = "";
-      document.getElementById("cantidad").value = "";
-      document.getElementById("especialidad").value = "";
-      document.getElementById("contenedorFechas").innerHTML = "";
-      document.getElementById("imageContainer").innerHTML = "Pega aquí tu imagen";
-      document.getElementById("output").innerHTML = "";
-      imagenPegada = null;
-    }
-  </script>
+  for (let i = 0; i < cantidad; i++) {
+    const label = document.createElement("label");
+    label.innerText = `Fecha y hora Cita ${i + 1}:`;
+    const input = document.createElement("input");
+    input.type = "datetime-local";
+    input.classList.add("fecha-cita");
+    contenedor.appendChild(label);
+    contenedor.appendChild(input);
+  }
+}
+</script>
 </body>
 </html>
