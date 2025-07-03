@@ -252,6 +252,20 @@ function limpiarCampos() {
   document.getElementById("output").innerHTML = "";
   imagenPegada = null;
 }
+
+// NUEVO: Capturar datos de URL
+window.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+  const servicio = params.get("service");
+  const tipoDoc = params.get("tdoc");
+  const documento = params.get("doc");
+  const telefono = params.get("telefono");
+
+  if (servicio) document.getElementById("servicio").value = decodeURIComponent(servicio);
+  if (tipoDoc) document.getElementById("tipoDocumento").value = decodeURIComponent(tipoDoc);
+  if (documento) document.getElementById("numeroDocumento").value = decodeURIComponent(documento);
+  if (telefono) document.getElementById("telefono").value = decodeURIComponent(telefono);
+});
 </script>
 </body>
 </html>
