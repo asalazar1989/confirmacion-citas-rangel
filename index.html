@@ -92,7 +92,7 @@
 
   <div class="row">
     <div class="col-6">
-      <label for="servicio">Servicio solicitado</label>
+      <label for="servicio">Servicio solicitado en IVR</label>
       <input type="text" id="servicio" readonly>
     </div>
     <div class="col-6">
@@ -148,8 +148,8 @@
 
   <div class="row" id="contenedorFechas"></div>
 
-  <label>📎 Pegue aquí el recorte de pantalla (Ctrl + V):</label>
-  <div id="imageContainer">Pega aquí tu imagen</div>
+  <label>📎 Pegue aquí el recorte del recordatorio de la cita(Ctrl + V):</label>
+  <div id="imageContainer">Pegue aquí el recorte del recordatorio de la cita</div>
 
   <button onclick="generarConfirmacion()">📩 Generar Confirmación Completa</button>
   <button onclick="limpiarCampos()">🧹 Limpiar</button>
@@ -247,7 +247,7 @@ function generarConfirmacion() {
   }).join("<br>");
 
   const html = `
-    <p>📢 A continuación, le compartimos la confirmación de su cita para que pueda asistir:</p>
+    <p> A continuación, le compartimos la confirmación de su cita para que pueda asistir:</p>
     <p>📍 <strong>Sede:</strong> ${sede}</p>
     <p>🏢 <strong>Dirección:</strong> ${direccion}</p>
     <p>🌐 <strong>¿Cómo llegar?:</strong> <a href="${mapa}" target="_blank">${mapa}</a></p>
