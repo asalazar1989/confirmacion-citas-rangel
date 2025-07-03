@@ -1,3 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <title>Generador de Confirmaciones</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f4f4;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    select, input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+    }
+    .invalid {
+      border-color: red !important;
+      background-color: #ffe5e5;
+    }
+    #imageContainer {
+      border: 2px dashed #888;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      background: #fff;
+      overflow: hidden;
+    }
+    #imageContainer img {
+      max-height: 300px;
+      max-width: 100%;
+      object-fit: contain;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #output {
+      margin-top: 30px;
+      padding: 15px;
+      background: #fff;
+      border: 2px solid #0078D7;
+    }
+    .row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .col-6 {
+      flex: 1 1 48%;
+    }
+    .guia {
+      background: #e8f0ff;
+      border: 1px solid #aac5e2;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .guia h3 {
+      margin-top: 0;
+    }
+    .guia ol {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="guia">
+    <h3>📋 Estructura sugerida para atención telefónica en Rangel Rehabilitación</h3>
+    <ol>
+      <li><strong>Saludo inicial:</strong> “Bienvenido a Rangel Rehabilitación, le habla [nombre del asesor]. ¿Con quién tengo el gusto?”</li>
+      <li><strong>Verificación de identidad:</strong> Confirmar tipo y número de documento, y teléfono.</li>
+      <li><strong>Identificar motivo de la llamada:</strong> “¿En qué podemos ayudarle hoy?”</li>
+      <li><strong>Validar agenda médica:</strong> Revisar SAP o CNT, agendar si hay disponibilidad. Si no, ofrecer contacto posterior.</li>
+      <li><strong>Confirmar la gestión:</strong> Repetir los datos agendados y confirmar envío de correo.</li>
+      <li><strong>Cierre de llamada:</strong> “Gracias por contactarnos. Que tenga un excelente día.”</li>
+    </ol>
+  </div>
+
+  <h2>📲 Generador de Confirmaciones de Cita</h2>
+
+  <div class="row">
+    <div class="col-6">
+      <label for="servicio">Servicio solicitado</label>
+      <input type="text" id="servicio" readonly>
+    </div>
+    <div class="col-6">
+      <label for="tipoDocumento">Tipo de Documento</label>
+      <input type="text" id="tipoDocumento" readonly>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-6">
+      <label for="numeroDocumento">Número de Documento</label>
+      <input type="text" id="numeroDocumento" readonly>
+    </div>
+    <div class="col-6">
+      <label for="telefono">Teléfono</label>
+      <input type="text" id="telefono" readonly>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="row">
+    <div class="col-6">
+      <label for="sede">Sede:</label>
+      <select id="sede">
+        <option value="">--Seleccione una sede--</option>
+        <option value="Sede Américas">Sede Américas</option>
+        <option value="Piso 2 - Altos del Bosque">Piso 2 - Altos del Bosque</option>
+        <option value="Piso 5 - Forest Medical Center">Piso 5 - Forest Medical Center</option>
+        <option value="Piso 6 - Forest Medical Center">Piso 6 - Forest Medical Center</option>
+        <option value="Calle 26 - Edificio Elemento">Calle 26 - Edificio Elemento</option>
+      </select>
+    </div>
+    <div class="col-6">
+      <label for="cantidad">Cantidad de citas a confirmar:</label>
+      <input id="cantidad" type="number" min="1" max="20" onchange="generarCamposFechas()"/>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-6">
+      <label for="especialidad">Especialidad:</label>
+      <select id="especialidad">
+        <option value="">--Seleccione una especialidad--</option>
+        <option value="Clínica de Dolor">Clínica de Dolor</option>
+        <option value="Electrodiagnóstico">Electrodiagnóstico</option>
+        <option value="Medicina Física y Rehabilitación">Medicina Física y Rehabilitación</option>
+        <option value="Medicina Ocupacional o Laboral">Medicina Ocupacional o Laboral</option>
+        <option value="Terapia">Terapia</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row" id="contenedorFechas"></div>
+
+  <label>📎 Pegue aquí el recorte de pantalla (Ctrl + V):</label>
+  <div id="imageContainer">Pega aquí tu imagen</div>
+
+  <button onclick="generarConfirmacion()">📩 Generar Confirmación Completa</button>
+  <button onclick="limpiarCampos()">🧹 Limpiar</button>
+
+  <div contenteditable="true" id="output"></div>
+  <button onclick="copiarConfirmacion()">📋 Copiar Confirmación</button>
+
 <script>
 let imagenPegada = null;
 
@@ -123,7 +282,7 @@ function limpiarCampos() {
   imagenPegada = null;
 }
 
-// NUEVO: Capturar datos de URL
+// Llenar campos desde URL
 window.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
   const servicio = params.get("service");
@@ -137,3 +296,5 @@ window.addEventListener("DOMContentLoaded", () => {
   if (telefono) document.getElementById("telefono").value = decodeURIComponent(telefono);
 });
 </script>
+</body>
+</html>
