@@ -257,7 +257,7 @@ function generarConfirmacion() {
 
   if (!sede || !especialidad || !imagenPegada || 
       (especialidad === "Terapia" && sede === "Sede Barranquilla" && (cantidad === 0 || fechas.length !== cantidad))) {
-    alert("⚠️ Por favor complete todos los campos y pegue una imagen.");
+    alert("⚠️ Por favor complete todos los campos y pegue la confirmación de la Cita.");
     return;
   }
 
@@ -300,7 +300,7 @@ function copiarConfirmacion() {
   selection.addRange(range);
   document.execCommand("copy");
   selection.removeAllRanges();
-  alert("✅ Confirmación copiada al portapapeles.");
+  alert("✅ Confirmación copiada por favor envíela al usuario.");
 }
 
 function limpiarCampos() {
