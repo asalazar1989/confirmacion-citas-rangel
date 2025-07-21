@@ -73,6 +73,9 @@
     .guia ol {
       padding-left: 20px;
     }
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -124,9 +127,10 @@
         <option value="Piso 5 - Forest Medical Center">Piso 5 - Forest Medical Center</option>
         <option value="Piso 6 - Forest Medical Center">Piso 6 - Forest Medical Center</option>
         <option value="Calle 26 - Edificio Elemento">Calle 26 - Edificio Elemento</option>
+        <option value="Sede Barranquilla">Sede Barranquilla</option>
       </select>
     </div>
-    <div class="col-6">
+    <div class="col-6 hidden" id="cantidadWrapper">
       <label for="cantidad">Cantidad de citas a confirmar:</label>
       <input id="cantidad" type="number" min="1" max="20" onchange="generarCamposFechas()"/>
     </div>
@@ -135,7 +139,7 @@
   <div class="row">
     <div class="col-6">
       <label for="especialidad">Especialidad:</label>
-      <select id="especialidad">
+      <select id="especialidad" onchange="verificarEspecialidad()">
         <option value="">--Seleccione una especialidad--</option>
         <option value="Clínica de Dolor">Clínica de Dolor</option>
         <option value="Electrodiagnóstico">Electrodiagnóstico</option>
@@ -146,7 +150,7 @@
     </div>
   </div>
 
-  <div class="row" id="contenedorFechas"></div>
+  <div class="row hidden" id="contenedorFechas"></div>
 
   <label>📎 Recordatorio de la cita SAP o CNT (Ctrl + V): Por favor tome una captura del recordatorio de la cita en SAP o CNT según corresponda, y péguelo en el recuadro siguiente. </label>
   <div id="imageContainer">Pegue aquí el recorte del recordatorio de la cita</div>
@@ -180,8 +184,28 @@ const sedesInfo = {
   "Calle 26 - Edificio Elemento": {
     direccion: "Avenida Calle 26 (Avenida El Dorado) # 69 - 76 - Bogotá D.C.",
     mapa: "https://maps.app.goo.gl/DSvCvM1gR2Th4YNY6"
+  },
+  "Sede Barranquilla": {
+    direccion: "68b2 Cra. 53 barrio El Prado - Barranquilla",
+    mapa: "https://maps.app.goo.gl/yDZ7d2hzodFZXCjU7"
   }
 };
+
+function verificarEspecialidad() {
+  const especialidad = document.getElementById("especialidad").value;
+  const cantidadWrapper = document.getElementById("cantidadWrapper");
+  const contenedorFechas = document.getElementById("contenedorFechas");
+
+  if (especialidad === "Terapia") {
+    cantidadWrapper.classList.remove("hidden");
+    contenedorFechas.classList.remove("hidden");
+  } else {
+    cantidadWrapper.classList.add("hidden");
+    contenedorFechas.classList.add("hidden");
+    document.getElementById("cantidad").value = "";
+    contenedorFechas.innerHTML = "";
+  }
+}
 
 function generarCamposFechas() {
   const cantidad = parseInt(document.getElementById("cantidad").value) || 0;
@@ -224,11 +248,11 @@ document.addEventListener("paste", function (e) {
 
 function generarConfirmacion() {
   const sede = document.getElementById("sede").value;
-  const cantidad = parseInt(document.getElementById("cantidad").value);
+  const cantidad = parseInt(document.getElementById("cantidad").value) || 0;
   const especialidad = document.getElementById("especialidad").value;
   const fechas = document.querySelectorAll(".fecha-cita");
 
-  if (!sede || !cantidad || !especialidad || fechas.length !== cantidad || !imagenPegada) {
+  if (!sede || !especialidad || !imagenPegada || (especialidad === "Terapia" && (cantidad === 0 || fechas.length !== cantidad))) {
     alert("⚠️ Por favor complete todos los campos y pegue una imagen.");
     return;
   }
@@ -236,22 +260,25 @@ function generarConfirmacion() {
   const direccion = sedesInfo[sede]?.direccion || "Dirección no disponible";
   const mapa = sedesInfo[sede]?.mapa || "#";
 
-  const listaFechas = Array.from(fechas).map((el, i) => {
-    const fecha = new Date(el.value);
-    if (isNaN(fecha)) return `• Cita ${i + 1}: Fecha no válida`;
-    const texto = fecha.toLocaleString("es-CO", {
-      weekday: "long", year: "numeric", month: "long", day: "numeric",
-      hour: "numeric", minute: "2-digit"
-    });
-    return `• Cita ${i + 1}: ${texto}`;
-  }).join("<br>");
+  let listaFechas = "";
+  if (especialidad === "Terapia") {
+    listaFechas = Array.from(fechas).map((el, i) => {
+      const fecha = new Date(el.value);
+      if (isNaN(fecha)) return `• Cita ${i + 1}: Fecha no válida`;
+      const texto = fecha.toLocaleString("es-CO", {
+        weekday: "long", year: "numeric", month: "long", day: "numeric",
+        hour: "numeric", minute: "2-digit"
+      });
+      return `• Cita ${i + 1}: ${texto}`;
+    }).join("<br>");
+  }
 
   const html = `
     <p> A continuación, le compartimos la confirmación de su cita para que pueda asistir:</p>
     <p>📍 <strong>Sede:</strong> ${sede}</p>
     <p>🏢 <strong>Dirección:</strong> ${direccion}</p>
     <p>🌐 <strong>¿Cómo llegar?:</strong> <a href="${mapa}" target="_blank">${mapa}</a></p>
-    <p>📅 <strong>Fechas y horas de las citas:</strong><br>${listaFechas}</p>
+    ${especialidad === "Terapia" ? `<p>📅 <strong>Fechas y horas de las citas:</strong><br>${listaFechas}</p>` : ""}
     <p>🩺 <strong>Especialidad:</strong> ${especialidad}</p>
     <p>🖼️ <strong>Confirmación de Cita:</strong></p>
     <img src="${imagenPegada}" style="max-width:100%; max-height:300px; object-fit:contain; border:1px solid #ccc;">
@@ -280,6 +307,7 @@ function limpiarCampos() {
   document.getElementById("imageContainer").innerHTML = "Pega aquí tu imagen";
   document.getElementById("output").innerHTML = "";
   imagenPegada = null;
+  verificarEspecialidad();
 }
 
 // Llenar campos desde URL
