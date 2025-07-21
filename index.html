@@ -120,7 +120,7 @@
   <div class="row">
     <div class="col-6">
       <label for="sede">Sede:</label>
-      <select id="sede">
+      <select id="sede" onchange="verificarEspecialidad()">
         <option value="">--Seleccione una sede--</option>
         <option value="Sede Américas">Sede Américas</option>
         <option value="Piso 2 - Altos del Bosque">Piso 2 - Altos del Bosque</option>
@@ -193,10 +193,13 @@ const sedesInfo = {
 
 function verificarEspecialidad() {
   const especialidad = document.getElementById("especialidad").value;
+  const sede = document.getElementById("sede").value;
   const cantidadWrapper = document.getElementById("cantidadWrapper");
   const contenedorFechas = document.getElementById("contenedorFechas");
 
-  if (especialidad === "Terapia") {
+  const mostrarCampos = (especialidad === "Terapia" && sede === "Sede Barranquilla");
+
+  if (mostrarCampos) {
     cantidadWrapper.classList.remove("hidden");
     contenedorFechas.classList.remove("hidden");
   } else {
@@ -252,7 +255,8 @@ function generarConfirmacion() {
   const especialidad = document.getElementById("especialidad").value;
   const fechas = document.querySelectorAll(".fecha-cita");
 
-  if (!sede || !especialidad || !imagenPegada || (especialidad === "Terapia" && (cantidad === 0 || fechas.length !== cantidad))) {
+  if (!sede || !especialidad || !imagenPegada || 
+      (especialidad === "Terapia" && sede === "Sede Barranquilla" && (cantidad === 0 || fechas.length !== cantidad))) {
     alert("⚠️ Por favor complete todos los campos y pegue una imagen.");
     return;
   }
@@ -261,7 +265,7 @@ function generarConfirmacion() {
   const mapa = sedesInfo[sede]?.mapa || "#";
 
   let listaFechas = "";
-  if (especialidad === "Terapia") {
+  if (especialidad === "Terapia" && sede === "Sede Barranquilla") {
     listaFechas = Array.from(fechas).map((el, i) => {
       const fecha = new Date(el.value);
       if (isNaN(fecha)) return `• Cita ${i + 1}: Fecha no válida`;
@@ -278,7 +282,7 @@ function generarConfirmacion() {
     <p>📍 <strong>Sede:</strong> ${sede}</p>
     <p>🏢 <strong>Dirección:</strong> ${direccion}</p>
     <p>🌐 <strong>¿Cómo llegar?:</strong> <a href="${mapa}" target="_blank">${mapa}</a></p>
-    ${especialidad === "Terapia" ? `<p>📅 <strong>Fechas y horas de las citas:</strong><br>${listaFechas}</p>` : ""}
+    ${(especialidad === "Terapia" && sede === "Sede Barranquilla") ? `<p>📅 <strong>Fechas y horas de las citas:</strong><br>${listaFechas}</p>` : ""}
     <p>🩺 <strong>Especialidad:</strong> ${especialidad}</p>
     <p>🖼️ <strong>Confirmación de Cita:</strong></p>
     <img src="${imagenPegada}" style="max-width:100%; max-height:300px; object-fit:contain; border:1px solid #ccc;">
