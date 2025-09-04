@@ -77,31 +77,33 @@
       display: none;
     }
 
-    /* 🚨 Estilos para el popup de alerta */
-    #popup {
+    /* 🚨 Estilos para popups */
+    .popup {
       display: none;
       position: fixed;
       top: 20px;
       right: 20px;
-      background: #ff4d4d;
-      color: white;
       padding: 20px;
       border-radius: 10px;
       font-size: 18px;
       font-weight: bold;
       box-shadow: 0 0 15px rgba(0,0,0,0.5);
-      animation: blink 1s infinite;
       z-index: 9999;
+      color: #fff;
+      animation: blink 1s infinite;
     }
+    #popup5 { background: #FFD700; color: #000; } /* Amarillo */
+    #popup7 { background: #FF8C00; } /* Naranja */
+    #popup10 { background: #B22222; } /* Rojo Escarlata */
+
     @keyframes blink {
       0% { opacity: 1; }
       50% { opacity: 0.5; }
       100% { opacity: 1; }
     }
-    #popup button {
+    .popup button {
       margin-top: 10px;
       background: #fff;
-      color: #ff4d4d;
       border: none;
       padding: 8px 12px;
       border-radius: 5px;
@@ -184,7 +186,7 @@
 
   <div class="row hidden" id="contenedorFechas"></div>
 
-  <label>📎 Recordatorio de la cita SAP o CNT (Ctrl + V): Por favor tome una captura del recordatorio de la cita en SAP o CNT según corresponda, y péguelo en el recuadro siguiente. </label>
+  <label>📎 Recordatorio de la cita SAP o CNT (Ctrl + V):</label>
   <div id="imageContainer">Pegue aquí el recorte del recordatorio de la cita</div>
 
   <button onclick="generarConfirmacion()">📩 Generar Confirmación Completa</button>
@@ -193,12 +195,22 @@
   <div contenteditable="true" id="output"></div>
   <button onclick="copiarConfirmacion()">📋 Copiar Confirmación</button>
 
-  <!-- 🚨 Popup de alerta -->
-  <div id="popup">
-    ⚠️ Lleva más de 7 minutos en la gestión.<br>
-    Por favor agilice el proceso.
-    <br>
-    <button onclick="cerrarPopup()">Entendido</button>
+  <!-- 🚨 Popups -->
+  <div id="popup5" class="popup">
+    ⚠️ Estimado asesor, lleva 5 minutos en la gestión<br>
+        <br><button onclick="cerrarPopup('popup5')">Entendido</button>
+  </div>
+
+  <div id="popup7" class="popup">
+    ⚠️ ¡Atención! lleva 7 minutos en la gestión:<br>
+    Si necesita apoyo por favor contacte a su coordinador o monitores
+    <br><button onclick="cerrarPopup('popup7')">Entendido</button>
+  </div>
+
+  <div id="popup10" class="popup">
+    🚨 Límite de tiempo establecido. Para no afectar indicadores (10 minutos):<br>
+    Por favor finalice pronto o escale la gestión
+    <br><button onclick="cerrarPopup('popup10')">Entendido</button>
   </div>
 
 <script>
@@ -354,14 +366,13 @@ function limpiarCampos() {
   verificarEspecialidad();
 }
 
-// 🚨 Mostrar popup después de X tiempo (ahora 5s para pruebas)
-setTimeout(() => {
-  document.getElementById("popup").style.display = "block";
-}, 420000);
+// 🚨 Mostrar popups
+setTimeout(() => { document.getElementById("popup5").style.display = "block"; }, 300000); // 5 min
+setTimeout(() => { document.getElementById("popup7").style.display = "block"; }, 420000); // 7 min
+setTimeout(() => { document.getElementById("popup10").style.display = "block"; }, 600); // 10 min
 
-// Cerrar popup
-function cerrarPopup() {
-  document.getElementById("popup").style.display = "none";
+function cerrarPopup(id) {
+  document.getElementById(id).style.display = "none";
 }
 
 // Llenar campos desde URL
