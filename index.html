@@ -76,6 +76,38 @@
     .hidden {
       display: none;
     }
+
+    /* 🚨 Estilos para el popup de alerta */
+    #popup {
+      display: none;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #ff4d4d;
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      animation: blink 1s infinite;
+      z-index: 9999;
+    }
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    #popup button {
+      margin-top: 10px;
+      background: #fff;
+      color: #ff4d4d;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -160,6 +192,14 @@
 
   <div contenteditable="true" id="output"></div>
   <button onclick="copiarConfirmacion()">📋 Copiar Confirmación</button>
+
+  <!-- 🚨 Popup de alerta -->
+  <div id="popup">
+    ⚠️ Lleva más de 7 minutos en la gestión.<br>
+    Por favor agilice el proceso.
+    <br>
+    <button onclick="cerrarPopup()">Entendido</button>
+  </div>
 
 <script>
 let imagenPegada = null;
@@ -312,6 +352,16 @@ function limpiarCampos() {
   document.getElementById("output").innerHTML = "";
   imagenPegada = null;
   verificarEspecialidad();
+}
+
+// 🚨 Mostrar popup después de X tiempo (ahora 5s para pruebas)
+setTimeout(() => {
+  document.getElementById("popup").style.display = "block";
+}, 5000);
+
+// Cerrar popup
+function cerrarPopup() {
+  document.getElementById("popup").style.display = "none";
 }
 
 // Llenar campos desde URL
