@@ -110,6 +110,52 @@
       cursor: pointer;
       font-weight: bold;
     }
+
+    /* --------------------------------------
+       ESTILOS ADICIONALES PARA POPUP 12 MIN
+       (SOLO AÑADIDOS — no cambian lo demás)
+       -------------------------------------- */
+    #popup12 {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 10000;
+    }
+    #popup12 .contenido {
+      font-family: Arial, sans-serif;
+      font-size: 36px;
+      font-weight: bold;
+      color: white;
+      padding: 30px;
+      text-align: center;
+      border-radius: 12px;
+      animation: pulse 2s infinite;
+      background: linear-gradient(270deg, red, orange, yellow, red);
+      background-size: 600% 600%;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+    #popup12 .btn {
+      margin-top: 20px;
+      background: #fff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    @keyframes pulse {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    /* FIN estilos añadidos */
   </style>
 </head>
 <body>
@@ -175,7 +221,7 @@
       <label for="especialidad">Especialidad:</label>
       <select id="especialidad" onchange="verificarEspecialidad()">
         <option value="">--Seleccione una especialidad--</option>
-        <option value="Clínica de Dolor">Clínica de Dolor</option>
+        <option value="Clínica de Dolor">Clínica del Dolor</option>
         <option value="Electrodiagnóstico">Electrodiagnóstico</option>
         <option value="Medicina Física y Rehabilitación">Medicina Física y Rehabilitación</option>
         <option value="Medicina Ocupacional o Laboral">Medicina Ocupacional o Laboral</option>
@@ -195,7 +241,7 @@
   <div contenteditable="true" id="output"></div>
   <button onclick="copiarConfirmacion()">📋 Copiar Confirmación</button>
 
-  <!-- 🚨 Popups -->
+  <!-- 🚨 Popups existentes (5,7,10) -->
   <div id="popup5" class="popup">
     ⚠️ Estimado asesor, lleva 5 minutos en la gestión<br>
         <br><button onclick="cerrarPopup('popup5')">Entendido</button>
@@ -212,6 +258,20 @@
     Por favor finalice pronto o escale la gestión
     <br><button onclick="cerrarPopup('popup10')">Entendido</button>
   </div>
+
+  <!-- -------------------------
+       NUEVO: POPUP 12 MINUTOS
+       (solo agregado, no cambia nada más)
+       ------------------------- -->
+  <div id="popup12" style="display:none; align-items:center;">
+    <div class="contenido">
+      ⚠️ ¡Tiempo: 12 Minutos en Llamada! <br>
+      Por favor solicite ayuda a su coordinador o monitores.
+      <br><br>
+      <button class="btn" onclick="cerrarPopup('popup12')">Aceptar</button>
+    </div>
+  </div>
+  <!-- FIN popup12 -->
 
 <script>
 let imagenPegada = null;
@@ -370,6 +430,13 @@ function limpiarCampos() {
 setTimeout(() => { document.getElementById("popup5").style.display = "block"; }, 300000); // 5 min
 setTimeout(() => { document.getElementById("popup7").style.display = "block"; }, 420000); // 7 min
 setTimeout(() => { document.getElementById("popup10").style.display = "block"; }, 600000); // 10 min
+
+// ---------- AÑADIDO: mostrar popup12 a los 12 minutos ----------
+setTimeout(() => { 
+  // usar flex para centrar verticalmente (el div tiene align-items)
+  document.getElementById("popup12").style.display = "flex"; 
+}, 720000); // 12 min
+// ------------------------------------------------------------
 
 function cerrarPopup(id) {
   document.getElementById(id).style.display = "none";
