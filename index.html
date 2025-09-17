@@ -113,7 +113,6 @@
 
     /* --------------------------------------
        ESTILOS ADICIONALES PARA POPUP 12 MIN
-       (SOLO AÑADIDOS — no cambian lo demás)
        -------------------------------------- */
     #popup12 {
       display: none;
@@ -155,7 +154,6 @@
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-    /* FIN estilos añadidos */
   </style>
 </head>
 <body>
@@ -208,6 +206,8 @@
         <option value="Piso 6 - Forest Medical Center">Piso 6 - Forest Medical Center</option>
         <option value="Calle 26 - Edificio Elemento">Calle 26 - Edificio Elemento</option>
         <option value="Sede Barranquilla">Sede Barranquilla</option>
+        <!-- 🚨 Nueva opción agregada -->
+        <option value="Atención Virtual – No debe presentarse a sede">Atención Virtual – No debe presentarse a sede</option>
       </select>
     </div>
     <div class="col-6 hidden" id="cantidadWrapper">
@@ -241,7 +241,7 @@
   <div contenteditable="true" id="output"></div>
   <button onclick="copiarConfirmacion()">📋 Copiar Confirmación</button>
 
-  <!-- 🚨 Popups existentes (5,7,10) -->
+  <!-- 🚨 Popups -->
   <div id="popup5" class="popup">
     ⚠️ Estimado asesor, lleva 5 minutos en la gestión<br>
         <br><button onclick="cerrarPopup('popup5')">Entendido</button>
@@ -259,10 +259,6 @@
     <br><button onclick="cerrarPopup('popup10')">Entendido</button>
   </div>
 
-  <!-- -------------------------
-       NUEVO: POPUP 12 MINUTOS
-       (solo agregado, no cambia nada más)
-       ------------------------- -->
   <div id="popup12" style="display:none; align-items:center;">
     <div class="contenido">
       ⚠️ ¡Tiempo: 12 Minutos en Llamada! <br>
@@ -271,7 +267,6 @@
       <button class="btn" onclick="cerrarPopup('popup12')">Aceptar</button>
     </div>
   </div>
-  <!-- FIN popup12 -->
 
 <script>
 let imagenPegada = null;
@@ -300,6 +295,10 @@ const sedesInfo = {
   "Sede Barranquilla": {
     direccion: "Cr. 53 #68B - 13 barrio El Prado - Barranquilla",
     mapa: "https://maps.app.goo.gl/yDZ7d2hzodFZXCjU7"
+  },
+  "Atención Virtual – No debe presentarse a sede": {
+    direccion: "Modalidad virtual. No requiere desplazamiento físico.",
+    mapa: "#"
   }
 };
 
@@ -394,7 +393,7 @@ function generarConfirmacion() {
     <p>📍 <strong>Sede:</strong> ${sede}</p>
     <p>🏢 <strong>Dirección:</strong> ${direccion}</p>
     <p>🌐 <strong>¿Cómo llegar?:</strong> <a href="${mapa}" target="_blank">${mapa}</a></p>
-    ${(especialidad === "Terapia" && sede === "Sede Barranquilla") ? `<p>📅 <strong>Fechas y horas de las citas:</strong><br>${listaFechas}</p>` : ""}
+    ${(especialidad === "Terapia" && sede === "Sede Barranquilla") ? `<p>📅 <strong>Fechas y horas de las citas:</strong><br>${listaFechas}</p>` : ""} 
     <p>🩺 <strong>Especialidad:</strong> ${especialidad}</p>
     <p>🖼️ <strong>Confirmación de Cita:</strong></p>
     <img src="${imagenPegada}" style="max-width:100%; max-height:300px; object-fit:contain; border:1px solid #ccc;">
@@ -430,13 +429,7 @@ function limpiarCampos() {
 setTimeout(() => { document.getElementById("popup5").style.display = "block"; }, 300000); // 5 min
 setTimeout(() => { document.getElementById("popup7").style.display = "block"; }, 420000); // 7 min
 setTimeout(() => { document.getElementById("popup10").style.display = "block"; }, 600000); // 10 min
-
-// ---------- AÑADIDO: mostrar popup12 a los 12 minutos ----------
-setTimeout(() => { 
-  // usar flex para centrar verticalmente (el div tiene align-items)
-  document.getElementById("popup12").style.display = "flex"; 
-}, 720000); // 12 min
-// ------------------------------------------------------------
+setTimeout(() => { document.getElementById("popup12").style.display = "flex"; }, 720000); // 12 min
 
 function cerrarPopup(id) {
   document.getElementById(id).style.display = "none";
