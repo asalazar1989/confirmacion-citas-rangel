@@ -160,12 +160,12 @@
   <div class="guia">
     <h3>📋 Estructura sugerida para atención telefónica en Rangel Rehabilitación</h3>
     <ol>
-      <li><strong>Saludo inicial:</strong> “Bienvenido a Rangel Rehabilitación, le habla [nombre del asesor]. ¿Con quién tengo el gusto?”</li>
+      <li><strong>Saludo inicial:</strong> "Bienvenido a Rangel Rehabilitación, le habla [nombre del asesor]. ¿Con quién tengo el gusto?"</li>
       <li><strong>Verificación de identidad:</strong> Confirmar tipo / número de documento, y teléfono.</li>
-      <li><strong>Identificar motivo de la llamada:</strong> “¿En qué podemos ayudarle hoy?”</li>
+      <li><strong>Identificar motivo de la llamada:</strong> "¿En qué podemos ayudarle hoy?"</li>
       <li><strong>Validar agenda médica:</strong> Revisar SAP o CNT, agendar si hay disponibilidad. Si no, ofrecer contacto posterior.</li>
       <li><strong>Confirmar la gestión:</strong> Repetir los datos agendados y confirmar envío de correo.</li>
-      <li><strong>Cierre de llamada:</strong> “Gracias por contactarnos. Que tenga un excelente día.”</li>
+      <li><strong>Cierre de llamada:</strong> "Gracias por contactarnos. Que tenga un excelente día."</li>
     </ol>
   </div>
 
@@ -202,11 +202,12 @@
         <option value="">--Seleccione una sede--</option>
         <option value="Sede Américas">Sede Américas</option>
         <option value="Piso 2 - Altos del Bosque">Piso 2 - Altos del Bosque</option>
+        <option value="Piso 3">Piso 3</option>
         <option value="Piso 5 - Forest Medical Center">Piso 5 - Forest Medical Center</option>
         <option value="Piso 6 - Forest Medical Center">Piso 6 - Forest Medical Center</option>
         <option value="Calle 26 - Edificio Elemento">Calle 26 - Edificio Elemento</option>
-        <option value="Sede Barranquilla">Sede Barranquilla</option>
-        <!-- 🚨 Nueva opción agregada -->
+        <option value="Sede Caribe 1">Sede Caribe 1</option>
+        <option value="Sede Caribe 2">Sede Caribe 2</option>
         <option value="Atención Virtual – No debe presentarse a sede">Atención Virtual – No debe presentarse a sede</option>
       </select>
     </div>
@@ -280,6 +281,10 @@ const sedesInfo = {
     direccion: "Calle 134 No. 7 - 83 Torre 1 Piso 2 - Bogotá D.C.",
     mapa: "https://maps.app.goo.gl/zvBLNfprPDRUkX4d7"
   },
+  "Piso 3": {
+    direccion: "Calle 134 No. 7 - 83 Torre 1 Piso 3 - Bogotá D.C.",
+    mapa: "https://maps.app.goo.gl/zvBLNfprPDRUkX4d7"
+  },
   "Piso 5 - Forest Medical Center": {
     direccion: "Cra 7B Bis # 132-38 Piso 5 Ed. Forest Medical Center - Bogotá D.C.",
     mapa: "https://maps.app.goo.gl/pJaUU8DZiRhETN3A6"
@@ -292,9 +297,13 @@ const sedesInfo = {
     direccion: "Avenida Calle 26 (Avenida El Dorado) # 69 - 76 - Bogotá D.C.",
     mapa: "https://maps.app.goo.gl/duCTfW3sobBPVREG9"
   },
-  "Sede Barranquilla": {
+  "Sede Caribe 1": {
     direccion: "Cr. 53 #68B - 13 barrio El Prado - Barranquilla",
     mapa: "https://maps.app.goo.gl/yDZ7d2hzodFZXCjU7"
+  },
+  "Sede Caribe 2": {
+    direccion: "Cra 53 # 70-112 LOCAL 1-A EDIFICIO SOMMACAL",
+    mapa: "https://maps.app.goo.gl/4LzPNSdt7M8CQBvU6"
   },
   "Atención Virtual – No debe presentarse a sede": {
     direccion: "Modalidad virtual. No requiere desplazamiento físico.",
@@ -308,7 +317,7 @@ function verificarEspecialidad() {
   const cantidadWrapper = document.getElementById("cantidadWrapper");
   const contenedorFechas = document.getElementById("contenedorFechas");
 
-  const mostrarCampos = (especialidad === "Terapia" && sede === "Sede Barranquilla");
+  const mostrarCampos = (especialidad === "Terapia" && sede === "Sede Caribe 1");
 
   if (mostrarCampos) {
     cantidadWrapper.classList.remove("hidden");
@@ -367,7 +376,7 @@ function generarConfirmacion() {
   const fechas = document.querySelectorAll(".fecha-cita");
 
   if (!sede || !especialidad || !imagenPegada || 
-      (especialidad === "Terapia" && sede === "Sede Barranquilla" && (cantidad === 0 || fechas.length !== cantidad))) {
+      (especialidad === "Terapia" && sede === "Sede Caribe 1" && (cantidad === 0 || fechas.length !== cantidad))) {
     alert("⚠️ Por favor complete todos los campos y pegue la confirmación de la Cita.");
     return;
   }
@@ -376,7 +385,7 @@ function generarConfirmacion() {
   const mapa = sedesInfo[sede]?.mapa || "#";
 
   let listaFechas = "";
-  if (especialidad === "Terapia" && sede === "Sede Barranquilla") {
+  if (especialidad === "Terapia" && sede === "Sede Caribe 1") {
     listaFechas = Array.from(fechas).map((el, i) => {
       const fecha = new Date(el.value);
       if (isNaN(fecha)) return `• Cita ${i + 1}: Fecha no válida`;
@@ -393,7 +402,7 @@ function generarConfirmacion() {
     <p>📍 <strong>Sede:</strong> ${sede}</p>
     <p>🏢 <strong>Dirección:</strong> ${direccion}</p>
     <p>🌐 <strong>¿Cómo llegar?:</strong> <a href="${mapa}" target="_blank">${mapa}</a></p>
-    ${(especialidad === "Terapia" && sede === "Sede Barranquilla") ? `<p>📅 <strong>Fechas y horas de las citas:</strong><br>${listaFechas}</p>` : ""} 
+    ${(especialidad === "Terapia" && sede === "Sede Caribe 1") ? `<p>📅 <strong>Fechas y horas de las citas:</strong><br>${listaFechas}</p>` : ""} 
     <p>🩺 <strong>Especialidad:</strong> ${especialidad}</p>
     <p>🖼️ <strong>Confirmación de Cita:</strong></p>
     <img src="${imagenPegada}" style="max-width:100%; max-height:300px; object-fit:contain; border:1px solid #ccc;">
