@@ -1,462 +1,656 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <title>Generador de Confirmaciones</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f4f4f4;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    select, input {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border: 2px solid #ccc;
-      border-radius: 5px;
-    }
-    .invalid {
-      border-color: red !important;
-      background-color: #ffe5e5;
-    }
-    #imageContainer {
-      border: 2px dashed #888;
-      height: 300px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 10px;
-      background: #fff;
-      overflow: hidden;
-    }
-    #imageContainer img {
-      max-height: 300px;
-      max-width: 100%;
-      object-fit: contain;
-    }
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    #output {
-      margin-top: 30px;
-      padding: 15px;
-      background: #fff;
-      border: 2px solid #0078D7;
-    }
-    .row {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-    .col-6 {
-      flex: 1 1 48%;
-    }
-    .guia {
-      background: #e8f0ff;
-      border: 1px solid #aac5e2;
-      border-radius: 5px;
-      padding: 15px;
-      margin-bottom: 20px;
-    }
-    .guia h3 {
-      margin-top: 0;
-    }
-    .guia ol {
-      padding-left: 20px;
-    }
-    .hidden {
-      display: none;
-    }
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Ficha de Llamada · Rangel Rehabilitación</title>
+<style>
+/* ===================================================================
+   FICHA DE LLAMADA - RANGEL REHABILITACIÓN
+   Pantalla emergente para el asesor cuando entra una llamada del IVR.
 
-    /* 🚨 Estilos para popups */
-    .popup {
-      display: none;
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 20px;
-      border-radius: 10px;
-      font-size: 18px;
-      font-weight: bold;
-      box-shadow: 0 0 15px rgba(0,0,0,0.5);
-      z-index: 9999;
-      color: #fff;
-      animation: blink 1s infinite;
-    }
-    #popup5 { background: #FFD700; color: #000; } /* Amarillo */
-    #popup7 { background: #FF8C00; } /* Naranja */
-    #popup10 { background: #B22222; } /* Rojo Escarlata */
+   PARÁMETROS DE LA URL (todos opcionales; los 4 primeros son los que ya
+   usaba la versión anterior, así que sigue siendo compatible):
+     tdoc       CC | TI | RC | CE | PPST | OT
+     doc        número de documento marcado en el IVR
+     telefono   $(item.from)
+     service    $(service.name)  -> skill / servicio
+     nombre     $(idname)        -> nombre hallado en la base de contactos
+     apellido   $(idapellido)
+     aseg       $(aseg)          -> compensar_PBS | compensar_PAC |
+                                    Compensar_Prepa | Sanitas | colmena | atgeneral
+     opcion     $(opcion)        -> recorrido acumulado, separado por |
+     condicion  $(condicion)
+     lineaTo      $(item.to)                    -> a qué línea llamó
+     transferido  $(item.priorTo)               -> línea previa, si fue transferido
+     veces        $(result.total)               -> veces que ese teléfono ha contactado
+                                                  (viene del DBAccess "ContarTotalLlamadas"
+                                                   contra Consulta_BP3; hoy SOLO existe en
+                                                   RANGEL_V2_COMUNICARSE_AGENTE)
+     interaccion  $(item.globalInteractionId)   -> n.º de interacción, para reportes
+     sesion       $(sessionId)
+   =================================================================== */
+:root{
+  --azul:#0d4a7a; --azul2:#1266a8; --azul-claro:#e8f2fa;
+  --borde:#d3dde6; --texto:#1b2733; --suave:#6b7c8c;
+  --ok:#1a7f52; --ok-bg:#e6f5ee;
+  --alerta:#a8560a; --alerta-bg:#fdf1e2;
+  --rojo:#a92828; --rojo-bg:#fbeaea;
+  --gris-bg:#f2f5f8; --blanco:#fff;
+  --sombra:0 1px 3px rgba(16,36,56,.08), 0 4px 14px rgba(16,36,56,.06);
+  --radio:10px;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:14px;font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+     background:var(--gris-bg);color:var(--texto);font-size:14px;line-height:1.45}
+.wrap{max-width:1280px;margin:0 auto}
 
-    @keyframes blink {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
-    }
-    .popup button {
-      margin-top: 10px;
-      background: #fff;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-    }
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:linear-gradient(100deg,var(--azul),var(--azul2));color:#fff;
+  padding:11px 16px;border-radius:var(--radio);box-shadow:var(--sombra)}
+.top h1{font-size:15.5px;margin:0;font-weight:600}
+.top .lema{font-size:12px;opacity:.85;margin-left:auto}
+.pill{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.3);padding:2px 10px;border-radius:99px;
+  font-size:12px;font-weight:600}
+.pill.aseg{background:#fff;color:var(--azul);border-color:#fff}
 
-    /* --------------------------------------
-       ESTILOS ADICIONALES PARA POPUP 12 MIN
-       -------------------------------------- */
-    #popup12 {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      justify-content: center;
-      align-items: center;
-      background-color: rgba(0, 0, 0, 0.6);
-      z-index: 10000;
-    }
-    #popup12 .contenido {
-      font-family: Arial, sans-serif;
-      font-size: 36px;
-      font-weight: bold;
-      color: white;
-      padding: 30px;
-      text-align: center;
-      border-radius: 12px;
-      animation: pulse 2s infinite;
-      background: linear-gradient(270deg, red, orange, yellow, red);
-      background-size: 600% 600%;
-      box-shadow: 0 0 30px rgba(0,0,0,0.5);
-    }
-    #popup12 .btn {
-      margin-top: 20px;
-      background: #fff;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 18px;
-      font-weight: bold;
-    }
-    @keyframes pulse {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-  </style>
+.grid{display:grid;grid-template-columns:minmax(250px,340px) 1fr;gap:14px;margin-top:14px}
+@media (max-width:660px){.grid{grid-template-columns:1fr}}
+
+.card{background:var(--blanco);border:1px solid var(--borde);border-radius:var(--radio);
+      box-shadow:var(--sombra);overflow:hidden;margin-bottom:14px}
+.card > h2{margin:0;padding:9px 13px;font-size:12.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--azul);background:var(--azul-claro);
+  border-bottom:1px solid var(--borde)}
+.card .body{padding:13px}
+
+.dato{display:flex;gap:10px;padding:6px 0;border-bottom:1px dashed #e6ecf1}
+.dato:last-child{border-bottom:0}
+.dato .k{flex:0 0 44%;color:var(--suave);font-size:12.5px}
+.dato .v{flex:1;font-weight:600;word-break:break-word}
+.dato .v.grande{font-size:16px;color:var(--azul)}
+.copiar{border:1px solid var(--borde);background:var(--blanco);color:var(--suave);
+  border-radius:5px;font-size:11px;padding:1px 6px;cursor:pointer;margin-left:6px}
+.copiar:hover{background:var(--azul-claro);color:var(--azul)}
+.vacio{color:var(--suave);font-style:italic;font-weight:400}
+
+.ruta{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.paso{background:var(--azul-claro);color:var(--azul);border:1px solid #cfe3f3;
+  padding:3px 9px;border-radius:99px;font-size:12px;font-weight:600}
+.paso.fin{background:var(--azul);color:#fff;border-color:var(--azul)}
+.flecha{color:#9fb3c4;font-size:12px}
+
+/* chuleta del asegurador */
+.chuleta{border-left:3px solid var(--azul2);background:#f6fafd;padding:10px 12px;border-radius:6px}
+.chuleta .tel{font-size:15px;font-weight:700;color:var(--azul)}
+.chuleta ul{margin:6px 0 0;padding-left:18px}
+.chuleta li{margin-bottom:3px}
+.si{color:var(--ok);font-weight:600}
+.no{color:var(--rojo);font-weight:600}
+.chip{display:inline-block;padding:3px 9px;border-radius:99px;font-size:12px;font-weight:600}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.warn{background:var(--alerta-bg);color:var(--alerta)}
+.chip.alto{background:var(--rojo-bg);color:var(--rojo)}
+.chip-linea{display:inline-block;background:var(--azul-claro);color:var(--azul);
+  border:1px solid #cfe3f3;padding:1px 8px;border-radius:99px;font-size:11.5px;
+  font-weight:600;margin-left:5px}
+.demo{background:#fff8e1;border:1px solid #ecd9a0;border-left:4px solid #e0b93a;
+  color:#5a4712;padding:10px 14px;border-radius:8px;margin-top:12px;font-size:13px}
+.aviso{background:var(--alerta-bg);border:1px solid #f0d7ae;border-left:3px solid #e0a94a;
+  padding:9px 11px;border-radius:6px;margin-top:9px;font-size:13px}
+
+label{display:block;margin-bottom:4px;font-weight:600;font-size:12.5px;color:#41525f}
+select,input,textarea{width:100%;padding:8px 10px;border:1px solid var(--borde);
+  border-radius:7px;font-family:inherit;font-size:13.5px;background:var(--blanco);color:var(--texto)}
+select:focus,input:focus,textarea:focus{outline:2px solid #a9d0ee;border-color:var(--azul2)}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.col{flex:1 1 200px}
+.hidden{display:none !important}
+
+#imageContainer{border:2px dashed #b9c8d4;border-radius:8px;height:100px;display:flex;
+  align-items:center;justify-content:center;text-align:center;background:#fbfcfd;
+  color:var(--suave);font-size:12.5px;padding:6px;cursor:pointer;transition:.15s;overflow:hidden}
+#imageContainer:hover{border-color:var(--azul2);background:var(--azul-claro)}
+#imageContainer img{max-height:100%;max-width:100%;object-fit:contain;border-radius:4px}
+#imageContainer.lleno{border-style:solid;border-color:var(--ok);height:145px}
+.hint{font-size:11.5px;color:var(--suave);margin-top:4px}
+
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+button.b{border:0;border-radius:8px;padding:9px 15px;font-size:13.5px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:.15s}
+.b-pri{background:var(--azul);color:#fff}
+.b-pri:hover{background:var(--azul2)}
+.b-sec{background:var(--blanco);color:var(--azul);border:1px solid var(--borde)}
+.b-sec:hover{background:var(--azul-claro)}
+
+#output{margin-top:13px;padding:13px;background:var(--blanco);border:1px solid var(--borde);
+  border-left:4px solid var(--azul);border-radius:8px;min-height:52px;font-size:13.5px}
+#output:empty::before{content:"La confirmación generada aparecerá aquí.";
+  color:var(--suave);font-style:italic}
+
+details.plegable{background:var(--blanco);border:1px solid var(--borde);
+  border-radius:var(--radio);box-shadow:var(--sombra);margin-bottom:14px}
+details.plegable summary{padding:9px 13px;cursor:pointer;font-weight:700;
+  font-size:12.5px;color:var(--azul);text-transform:uppercase;letter-spacing:.5px}
+details.plegable .cont{padding:0 14px 13px 14px;color:#3c4b59;font-size:13px}
+details.plegable ol,details.plegable ul{margin:0;padding-left:20px}
+details.plegable li{margin-bottom:4px}
+
+.popup{display:none;position:fixed;top:16px;right:16px;max-width:330px;padding:14px 16px;
+  border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.28);
+  z-index:9999;color:#fff}
+#popup5{background:#e8b93c;color:#3d2f05}
+#popup7{background:#d9741f}
+#popup10{background:#b02a2a}
+.popup button{margin-top:10px;background:#fff;border:0;padding:6px 12px;border-radius:6px;
+  cursor:pointer;font-weight:700;font-size:12.5px}
+#popup12{display:none;position:fixed;inset:0;background:rgba(10,20,30,.72);z-index:10000;
+  align-items:center;justify-content:center}
+#popup12 .contenido{background:linear-gradient(120deg,#b02a2a,#d9741f);color:#fff;font-size:22px;
+  font-weight:700;padding:28px 34px;border-radius:14px;text-align:center;max-width:520px}
+#popup12 .btn{margin-top:16px;background:#fff;color:#b02a2a;border:0;padding:10px 20px;
+  border-radius:8px;cursor:pointer;font-size:15px;font-weight:700}
+</style>
 </head>
 <body>
-  <div class="guia">
-    <h3>📋 Estructura sugerida para atención telefónica en Rangel Rehabilitación</h3>
-    <ol>
-      <li><strong>Saludo inicial:</strong> "Bienvenido a Rangel Rehabilitación, le habla [nombre del asesor]. ¿Con quién tengo el gusto?"</li>
-      <li><strong>Verificación de identidad:</strong> Confirmar tipo / número de documento, y teléfono.</li>
-      <li><strong>Identificar motivo de la llamada:</strong> "¿En qué podemos ayudarle hoy?"</li>
-      <li><strong>Validar agenda médica:</strong> Revisar SAP o CNT, agendar si hay disponibilidad. Si no, ofrecer contacto posterior.</li>
-      <li><strong>Confirmar la gestión:</strong> Repetir los datos agendados y confirmar envío de correo.</li>
-      <li><strong>Cierre de llamada:</strong> "Gracias por contactarnos. Que tenga un excelente día."</li>
-    </ol>
+<div class="wrap">
+
+  <div class="top">
+    <h1>📞 Ficha de Llamada · Rangel Rehabilitación</h1>
+    <span class="pill" id="pillCanal">Llamada</span>
+    <span class="pill aseg hidden" id="pillAseg"></span>
+    <span class="lema">Dedicados a la Excelencia</span>
   </div>
 
-  <h2>📲 Generador de Confirmaciones de Cita Rangel Rehabilitación "Dedicados a la Excelencia"</h2>
+  <div class="grid">
 
-  <div class="row">
-    <div class="col-6">
-      <label for="servicio">Servicio solicitado en IVR</label>
-      <input type="text" id="servicio" readonly>
+    <!-- ============ IZQUIERDA: lo que trae el IVR ============ -->
+    <div>
+      <div class="card">
+        <h2>👤 Paciente</h2>
+        <div class="body">
+          <div class="dato" id="filaNombre"><span class="k">Nombre</span>
+            <span class="v" id="vNombre"></span></div>
+          <div class="dato"><span class="k">Identificación</span>
+            <span class="v grande" id="vDoc"></span></div>
+          <div class="dato"><span class="k">Teléfono</span>
+            <span class="v" id="vTel"></span></div>
+          <div class="dato" id="filaDocBase"><span class="k">Documento en la base</span>
+            <span class="v" id="vDocBase"></span></div>
+          <div class="dato" id="filaTelBase"><span class="k">Teléfonos registrados</span>
+            <span class="v" id="vTelBase"></span></div>
+          <div class="dato" id="filaAseg"><span class="k">Asegurador</span>
+            <span class="v" id="vAseg"></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📞 La llamada</h2>
+        <div class="body">
+          <div class="dato" id="filaLinea"><span class="k">Línea que marcó</span>
+            <span class="v" id="vLinea"></span></div>
+          <div class="dato" id="filaVeces"><span class="k">Veces que ha contactado</span>
+            <span class="v" id="vVeces"></span></div>
+          <div class="dato" id="filaTransf"><span class="k">Transferido desde</span>
+            <span class="v" id="vTransf"></span></div>
+          <div class="dato" id="filaServicio"><span class="k">Servicio / skill</span>
+            <span class="v" id="vServicio"></span></div>
+          <div class="dato"><span class="k">Atención iniciada</span>
+            <span class="v" id="vHora"></span></div>
+          <div class="dato" id="filaCondicion"><span class="k">Estado reportado</span>
+            <span class="v" id="vCondicion"></span></div>
+          <div class="dato" id="filaInter"><span class="k">N.º de interacción</span>
+            <span class="v" id="vInter"></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🗺️ Recorrido en el IVR</h2>
+        <div class="body"><div class="ruta" id="vRuta"></div></div>
+      </div>
+
+      <div class="card" id="cardChuleta">
+        <h2>💡 Recuerde para este asegurador</h2>
+        <div class="body"><div id="vChuleta"></div></div>
+      </div>
     </div>
-    <div class="col-6">
-      <label for="tipoDocumento">Tipo de Documento</label>
-      <input type="text" id="tipoDocumento" readonly>
+
+    <!-- ============ DERECHA: generador y apoyos ============ -->
+    <div>
+      <div class="card">
+        <h2>📲 Generador de confirmación de cita</h2>
+        <div class="body">
+          <div class="row">
+            <div class="col">
+              <label for="sede">Sede</label>
+              <select id="sede" onchange="verificarEspecialidad()">
+                <option value="">— Seleccione una sede —</option>
+                <option>Sede Américas</option>
+                <option>Piso 2 - Altos del Bosque</option>
+                <option>Piso 3</option>
+                <option>Piso 5 - Forest Medical Center</option>
+                <option>Piso 6 - Forest Medical Center</option>
+                <option>Calle 26 - Edificio Elemento</option>
+                <option>Sede Caribe 1</option>
+                <option>Sede Caribe 2</option>
+                <option>Atención Virtual – No debe presentarse a sede</option>
+              </select>
+            </div>
+            <div class="col">
+              <label for="especialidad">Especialidad</label>
+              <select id="especialidad" onchange="verificarEspecialidad()">
+                <option value="">— Seleccione una especialidad —</option>
+                <option value="Clínica de Dolor">Clínica del Dolor</option>
+                <option value="Electrodiagnóstico">Electrodiagnóstico</option>
+                <option value="Medicina Física y Rehabilitación">Medicina Física y Rehabilitación</option>
+                <option value="Medicina Ocupacional o Laboral">Medicina Ocupacional o Laboral</option>
+                <option value="Terapia">Terapia</option>
+              </select>
+            </div>
+            <div class="col hidden" id="cantidadWrapper">
+              <label for="cantidad">Cantidad de citas</label>
+              <input id="cantidad" type="number" min="1" max="20" onchange="generarCamposFechas()"/>
+            </div>
+          </div>
+
+          <div class="row hidden" id="contenedorFechas" style="margin-top:12px"></div>
+
+          <div id="avisoSede"></div>
+
+          <div style="margin-top:13px">
+            <label>📎 Recordatorio de la cita (SAP o CNT)</label>
+            <div id="imageContainer" onclick="ampliar()">Haga clic aquí y pegue con Ctrl + V</div>
+            <div class="hint">La imagen se amplía al hacer clic.</div>
+          </div>
+
+          <div class="btns">
+            <button class="b b-pri" onclick="generarConfirmacion()">📩 Generar confirmación</button>
+            <button class="b b-sec" onclick="copiarConfirmacion()">📋 Copiar</button>
+            <button class="b b-sec" onclick="limpiarCampos()">🧹 Limpiar</button>
+          </div>
+
+          <div contenteditable="true" id="output"></div>
+        </div>
+      </div>
+
+      <details class="plegable">
+        <summary>📋 Guía de atención telefónica</summary>
+        <div class="cont">
+          <ol>
+            <li><strong>Saludo:</strong> "Bienvenido a Rangel Rehabilitación, le habla [su nombre]. ¿Con quién tengo el gusto?"</li>
+            <li><strong>Verificación:</strong> confirme tipo y número de documento — <em>ya vienen del IVR, solo confírmelos</em>.</li>
+            <li><strong>Motivo:</strong> "¿En qué podemos ayudarle hoy?" — el recorrido de la izquierda le indica qué venía buscando.</li>
+            <li><strong>Valide agenda</strong> en SAP o CNT. Si no hay disponibilidad, ofrezca lista de contacto posterior.</li>
+            <li><strong>Confirme la gestión:</strong> repita fecha, hora y sede, y envíe la confirmación.</li>
+            <li><strong>Cierre:</strong> "Gracias por contactarnos. Que tenga un excelente día."</li>
+          </ol>
+        </div>
+      </details>
+
+      <details class="plegable">
+        <summary>🕒 Horarios · sedes · historia clínica</summary>
+        <div class="cont">
+          <p style="margin:6px 0"><strong>Horario:</strong> lunes a viernes 7:00 a.m.–6:00 p.m. · sábados 7:00 a.m.–1:00 p.m. · domingos y festivos cerrado.</p>
+          <p style="margin:6px 0"><strong>Historia clínica:</strong> historiasclinicas@rangelrehabilitacion.com.co, asunto <em>HISTORIA CLINICA</em>, con fotocopia del documento y el formato diligenciado.</p>
+          <p style="margin:6px 0"><strong>PQRSF:</strong> info@rangelrehabilitacion.com.co</p>
+          <p style="margin:6px 0"><strong>Líneas:</strong> 601 745 6047 · 601 756 2389 · 601 756 2403 · Sanitas 601 794 0567 · ARL/Ecopetrol 601 328 9097 · Barranquilla (605) 322 8824 / (605) 400 0007</p>
+        </div>
+      </details>
     </div>
   </div>
+</div>
 
-  <div class="row">
-    <div class="col-6">
-      <label for="numeroDocumento">Número de Documento</label>
-      <input type="text" id="numeroDocumento" readonly>
-    </div>
-    <div class="col-6">
-      <label for="telefono">Teléfono</label>
-      <input type="text" id="telefono" readonly>
-    </div>
-  </div>
-
-  <hr>
-
-  <div class="row">
-    <div class="col-6">
-      <label for="sede">Sede:</label>
-      <select id="sede" onchange="verificarEspecialidad()">
-        <option value="">--Seleccione una sede--</option>
-        <option value="Sede Américas">Sede Américas</option>
-        <option value="Piso 2 - Altos del Bosque">Piso 2 - Altos del Bosque</option>
-        <option value="Piso 3">Piso 3</option>
-        <option value="Piso 5 - Forest Medical Center">Piso 5 - Forest Medical Center</option>
-        <option value="Piso 6 - Forest Medical Center">Piso 6 - Forest Medical Center</option>
-        <option value="Calle 26 - Edificio Elemento">Calle 26 - Edificio Elemento</option>
-        <option value="Sede Caribe 1">Sede Caribe 1</option>
-        <option value="Sede Caribe 2">Sede Caribe 2</option>
-        <option value="Atención Virtual – No debe presentarse a sede">Atención Virtual – No debe presentarse a sede</option>
-      </select>
-    </div>
-    <div class="col-6 hidden" id="cantidadWrapper">
-      <label for="cantidad">Cantidad de citas a confirmar:</label>
-      <input id="cantidad" type="number" min="1" max="20" onchange="generarCamposFechas()"/>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-6">
-      <label for="especialidad">Especialidad:</label>
-      <select id="especialidad" onchange="verificarEspecialidad()">
-        <option value="">--Seleccione una especialidad--</option>
-        <option value="Clínica de Dolor">Clínica del Dolor</option>
-        <option value="Electrodiagnóstico">Electrodiagnóstico</option>
-        <option value="Medicina Física y Rehabilitación">Medicina Física y Rehabilitación</option>
-        <option value="Medicina Ocupacional o Laboral">Medicina Ocupacional o Laboral</option>
-        <option value="Terapia">Terapia</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="row hidden" id="contenedorFechas"></div>
-
-  <label>📎 Recordatorio de la cita SAP o CNT (Ctrl + V):</label>
-  <div id="imageContainer">Pegue aquí el recorte del recordatorio de la cita</div>
-
-  <button onclick="generarConfirmacion()">📩 Generar Confirmación Completa</button>
-  <button onclick="limpiarCampos()">🧹 Limpiar</button>
-
-  <div contenteditable="true" id="output"></div>
-  <button onclick="copiarConfirmacion()">📋 Copiar Confirmación</button>
-
-  <!-- 🚨 Popups -->
-  <div id="popup5" class="popup">
-    ⚠️ Estimado asesor, lleva 5 minutos en la gestión<br>
-        <br><button onclick="cerrarPopup('popup5')">Entendido</button>
-  </div>
-
-  <div id="popup7" class="popup">
-    ⚠️ ¡Atención! lleva 7 minutos en la gestión:<br>
-    Si necesita apoyo por favor contacte a su coordinador o monitores
-    <br><button onclick="cerrarPopup('popup7')">Entendido</button>
-  </div>
-
-  <div id="popup10" class="popup">
-    🚨 Límite de tiempo establecido. Para no afectar indicadores (10 minutos):<br>
-    Por favor finalice pronto o escale la gestión
-    <br><button onclick="cerrarPopup('popup10')">Entendido</button>
-  </div>
-
-  <div id="popup12" style="display:none; align-items:center;">
-    <div class="contenido">
-      ⚠️ ¡Tiempo: 12 Minutos en Llamada! <br>
-      Por favor solicite ayuda a su coordinador o monitores.
-      <br><br>
-      <button class="btn" onclick="cerrarPopup('popup12')">Aceptar</button>
-    </div>
-  </div>
+<div id="popup5" class="popup">⚠️ Lleva <b>5 minutos</b> en la gestión.
+  <br><button onclick="cerrarPopup('popup5')">Entendido</button></div>
+<div id="popup7" class="popup">⚠️ Lleva <b>7 minutos</b>. Si necesita apoyo, contacte a su coordinador o monitor.
+  <br><button onclick="cerrarPopup('popup7')">Entendido</button></div>
+<div id="popup10" class="popup">🚨 <b>10 minutos.</b> Por favor finalice pronto o escale la gestión.
+  <br><button onclick="cerrarPopup('popup10')">Entendido</button></div>
+<div id="popup12"><div class="contenido">⚠️ 12 minutos en llamada<br>
+  <span style="font-size:16px;font-weight:400">Por favor solicite ayuda a su coordinador o monitor.</span>
+  <br><button class="btn" onclick="cerrarPopup('popup12')">Aceptar</button></div></div>
 
 <script>
-let imagenPegada = null;
+/* ============ diccionarios ============ */
+const TDOC = {CC:"Cédula de ciudadanía",TI:"Tarjeta de identidad",RC:"Registro civil",
+  CE:"Cédula de extranjería",PPST:"Pasaporte",PA:"Pasaporte",OT:"Otro tipo de documento",
+  NO_INDICA:"No indicado"};
 
-const sedesInfo = {
-  "Sede Américas": {
-    direccion: "CL 20 (Avenida de las Américas) # 43A - 32 - Bogotá D.C.",
-    mapa: "https://maps.app.goo.gl/F71EgmnxAHW5rnng6"
-  },
-  "Piso 2 - Altos del Bosque": {
-    direccion: "Calle 134 No. 7 - 83 Torre 1 Piso 2 - Bogotá D.C.",
-    mapa: "https://maps.app.goo.gl/zvBLNfprPDRUkX4d7"
-  },
-  "Piso 3": {
-    direccion: "Calle 134 No. 7 - 83 Torre 1 Piso 3 - Bogotá D.C.",
-    mapa: "https://maps.app.goo.gl/zvBLNfprPDRUkX4d7"
-  },
-  "Piso 5 - Forest Medical Center": {
-    direccion: "Cra 7B Bis # 132-38 Piso 5 Ed. Forest Medical Center - Bogotá D.C.",
-    mapa: "https://maps.app.goo.gl/pJaUU8DZiRhETN3A6"
-  },
-  "Piso 6 - Forest Medical Center": {
-    direccion: "Cra 7B Bis # 132-38 Piso 6 Ed. Forest Medical Center - Bogotá D.C.",
-    mapa: "https://maps.app.goo.gl/pJaUU8DZiRhETN3A6"
-  },
-  "Calle 26 - Edificio Elemento": {
-    direccion: "Avenida Calle 26 (Avenida El Dorado) # 69 - 76 - Bogotá D.C.",
-    mapa: "https://maps.app.goo.gl/duCTfW3sobBPVREG9"
-  },
-  "Sede Caribe 1": {
-    direccion: "Cr. 53 #68B - 13 barrio El Prado - Barranquilla",
-    mapa: "https://maps.app.goo.gl/yDZ7d2hzodFZXCjU7"
-  },
-  "Sede Caribe 2": {
-    direccion: "Cra 53 # 70-112 LOCAL 1-A EDIFICIO SOMMACAL",
-    mapa: "https://maps.app.goo.gl/4LzPNSdt7M8CQBvU6"
-  },
-  "Atención Virtual – No debe presentarse a sede": {
-    direccion: "Modalidad virtual. No requiere desplazamiento físico.",
-    mapa: "#"
-  }
+/* los 60 códigos que usa el IVR, traducidos a lenguaje del asesor */
+const OPCIONES = {
+  AGENDAMIENTO:"Agendamiento", AGENDAMIENTO_REPROGRAMA:"Agendar o reprogramar",
+  AGENDA_REPROGRAMA:"Reprogramación", CANCELAR:"Cancelación",
+  CANCELA_REPROGRAMA:"Cancelar o reprogramar", MOTIVO_COMUNICACION:"Motivo de la llamada",
+  SOLICITUD:"Solicitud", COMUNICARSE:"Comunicarse con un agente",
+  USUARIO:"Identificación de usuario", PLAN:"Selección de plan",
+  ASEGURADORA:"Selección de aseguradora",
+  ASEGURADORA_COMPENSAR_PBS:"Compensar PBS", ASEGURADORA_COMPENSAR_PAC:"Compensar PAC",
+  ASEGURADORA_COMP_PREPA:"Compensar Prepagada", ASEGURADORA_SANITAS:"Sanitas",
+  ASEGURADORA_COLMENA:"Colmena", COMPENSAR:"Compensar", SANITAS:"Sanitas",
+  POSITIVA:"Positiva", COLMENA:"Colmena", COLSANITAS:"Colsanitas",
+  Colsanitas_ARL:"Colsanitas ARL", PBS:"Plan PBS", PAC:"Plan PAC",
+  USUARIO_PBS:"Usuario PBS", USUARIO_PREMIUM:"Usuario Premium",
+  USUARIO_OA:"Usuario modelo OA", USUARIO_PRI:"Usuario modelo PRI",
+  CIUDAD_BOGOTA:"Bogotá", CIUDAD_BARRANQUILLA:"Barranquilla",
+  MEDICINA:"Medicina física y rehabilitación", MEDICINAF:"Medicina física y rehabilitación",
+  ELECTRODIAGNOSTICO:"Electrodiagnóstico", CLINICA:"Clínica del dolor",
+  CLINICA_DOLOR:"Clínica del dolor", TERAPIA:"Terapia",
+  MODELOS_ATENCION:"Modelos de atención", REHABILITACION:"Rehabilitación",
+  PROGRAMA_OA_Sanitas:"Programa OA · Sanitas", PROGRAMA_ATENCION_LUMBAR:"Programa lumbar",
+  PSICOLOGIA_NEUROPSICOLOGIA:"Neuropsicología", SUEROTERAPIA:"Sueroterapia",
+  ATENCION_GENERAL:"Atención general",
+  INFO:"Información general", INFO_GENERAL:"Información general",
+  INFORMACION_GENERAL:"Información general", HORARIO_SEDES:"Horarios de sedes",
+  DIRECCIONES:"Direcciones", SERVICIOS_RANGEL:"Servicios que prestamos",
+  PREPARACIONES:"Preparaciones", PREPARACIONES_DOCTOR:"Prep. Dr. Guardias",
+  FLUORSC:"Prep. fluoroscopia", HISTORIA_CLINICA:"Historia clínica",
+  FH_HORARIO_ATENCION:"Horarios (fuera de horario)",
+  FH_HORARIO_DIRECCIONES:"Direcciones (fuera de horario)",
+  FH_SERVICIOS_RANGEL:"Servicios (fuera de horario)",
+  FH_PREPARACIONES:"Preparaciones (fuera de horario)",
+  FH_PREPARACIONES_FLUORSC:"Prep. fluoroscopia (fuera de horario)",
+  FH_PREPARACIONES_DOCTOR:"Prep. Dr. Guardias (fuera de horario)",
+  FH_COPIA_HISTORIA_CLINICA:"Historia clínica (fuera de horario)"
 };
 
-function verificarEspecialidad() {
-  const especialidad = document.getElementById("especialidad").value;
-  const sede = document.getElementById("sede").value;
-  const cantidadWrapper = document.getElementById("cantidadWrapper");
-  const contenedorFechas = document.getElementById("contenedorFechas");
+/* chuleta por asegurador: lo que el asesor debe tener presente */
+const ASEG = {
+  compensar_PBS:{n:"Compensar PBS",tel:"601 444 1234",
+    nota:"Si la solicitud NO corresponde a nuestros servicios, remitir a Compensar.",
+    extra:["Servicios: medicina física y rehabilitación, electrodiagnóstico, clínica del dolor, terapia y modelos de atención."]},
+  compensar_PAC:{n:"Compensar PAC (Plan Complementario)",tel:"601 444 1234",
+    nota:"Si la solicitud NO corresponde a nuestros servicios, remitir a Compensar.",
+    extra:["Servicios: medicina física y rehabilitación, electrodiagnóstico, clínica del dolor, terapia y modelos de atención."]},
+  Compensar_Prepa:{n:"Compensar Medicina Prepagada",tel:"601 444 1234",
+    nota:"Si la solicitud NO corresponde a nuestros servicios, remitir a su aseguradora.",
+    extra:["Servicios: medicina física y rehabilitación, electrodiagnóstico, clínica del dolor y terapia."]},
+  Sanitas:{n:"Sanitas",tel:"375 9000",
+    nota:"Si la solicitud NO corresponde a nuestros servicios, remitir a Sanitas.",
+    extra:["Nuestra línea directa Sanitas: <b>601 794 0567</b>",
+           "Medicamentos que <span class='si'>SÍ</span> se aplican: Kenacort · Dropyal · Triacinolona.",
+           "Medicamentos que <span class='no'>NO</span> se aplican: Denosumab · ácido zoledrónico · derivados de dermatología · hierro carboximaltosa.",
+           "Medicamento de ortopedia sin especificar → remitir a Sanitas."]},
+  colmena:{n:"Colmena",tel:"—",
+    nota:"Línea exclusiva para afiliados a Colmena.",
+    extra:["Se atienden todos los servicios de Rangel Rehabilitación."]},
+  atgeneral:{n:"Atención general",tel:"601 745 6047",
+    nota:"Usuario sin asegurador identificado en el IVR: confírmelo al inicio de la llamada.",
+    extra:["Aseguradores atendidos: Compensar, Sanitas, Positiva, Colsanitas, Colmena, Ecopetrol y Axa Colpatria."]}
+};
 
-  const mostrarCampos = (especialidad === "Terapia" && sede === "Sede Caribe 1");
+/* líneas telefónicas: sacadas de las condiciones $(item.to) del propio IVR */
+const LINEAS = {
+  "17456047":["601 745 6047","Línea principal"],
+  "17562389":["601 756 2389","Atención general"],
+  "17562403":["601 756 2403","Atención general"],
+  "17420391":["601 742 0391","Atención general"],
+  "17420392":["601 742 0392","Atención general"],
+  "17461691":["601 746 1691","Modelo OA · pruebas cognitivas"],
+  "17462114":["601 746 2114","Atención general"],
+  "17946213":["601 794 6213","Atención general"],
+  "17702757":["601 770 2757","Atención general"],
+  "17940567":["601 794 0567","Exclusiva Sanitas"],
+  "13289097":["601 328 9097","Exclusiva ARL · Ecopetrol"],
+  "53228824":["(605) 322 8824","Barranquilla"],
+  "54000007":["(605) 400 0007","Barranquilla"],
+  "53225680":["(605) 322 5680","ARL Barranquilla"],
+  "15555555":["Compensar PBS","Transferencia desde Compensar"],
+  "16666666":["Compensar PAC","Transferencia desde Compensar"],
+  "18888888":["Compensar Prepagada","Transferencia desde Compensar"],
+  "8888888" :["Compensar Prepagada","Transferencia desde Compensar"]
+};
+function buscarLinea(n){
+  if(!n) return null;
+  const limpio = n.replace(/\D/g,"");
+  for(const k in LINEAS) if(limpio.endsWith(k) || k.endsWith(limpio)) return LINEAS[k];
+  return null;
+}
 
-  if (mostrarCampos) {
-    cantidadWrapper.classList.remove("hidden");
-    contenedorFechas.classList.remove("hidden");
+/* Datos de ejemplo: se usan SOLO si la página se abre sin ningún parámetro,
+   para poder revisar el diseño completo fuera de Bright Pattern.            */
+const DEMO = {
+  tdoc:"CC", doc:"1010184016", telefono:"573102137293", service:"CH_MODELO_OA",
+  nombre:"ALIRIO", apellido:"SALAZAR GARZON", aseg:"Sanitas",
+  docBase:"1010184016", telBase:"3102137293, 6017456047",
+  lineaTo:"17940567", transferido:"15555555", veces:"3",
+  interaccion:"A1B2C3D4-5678-90EF", condicion:"ag_no_contesta",
+  opcion:"|ASEGURADORA|ASEGURADORA_SANITAS|MOTIVO_COMUNICACION|AGENDAMIENTO|ELECTRODIAGNOSTICO"
+};
+
+const P = new URLSearchParams(location.search);
+const MODO_DEMO = [...P.keys()].length === 0;
+const g = k => (MODO_DEMO ? (DEMO[k] || "") : (P.get(k) || "")).trim();
+const limpiaTel = t => t.replace(/^whatsapp:/i,"").replace(/^57(?=\d{10})/,"");
+const vacio = (el,txt) => { el.innerHTML = '<span class="vacio">'+txt+'</span>'; };
+function texto(id,v,tv){const e=document.getElementById(id); if(v) e.textContent=v; else vacio(e,tv||"Sin dato");}
+function copiable(id,v){
+  const e=document.getElementById(id);
+  if(!v){vacio(e,"Sin dato");return;}
+  e.innerHTML=""; e.append(document.createTextNode(v));
+  const b=document.createElement("button"); b.className="copiar"; b.textContent="copiar";
+  b.onclick=()=>{navigator.clipboard.writeText(v);b.textContent="✓";
+                 setTimeout(()=>b.textContent="copiar",1200);};
+  e.appendChild(b);
+}
+function ocultar(id){document.getElementById(id).classList.add("hidden");}
+
+window.addEventListener("DOMContentLoaded", () => {
+  if(MODO_DEMO){
+    const b = document.createElement("div");
+    b.className = "demo";
+    b.innerHTML = "👁️ <b>Vista de ejemplo.</b> La página se abrió sin datos, "
+                + "así que se muestran valores de muestra para revisar el diseño. "
+                + "En Bright Pattern se llenan con los del paciente real.";
+    document.querySelector(".wrap").insertBefore(b, document.querySelector(".grid"));
+  }
+
+  /* ---- paciente ---- */
+  const nom = [g("nombre"), g("apellido")].filter(Boolean).join(" ").trim();
+  if(nom) texto("vNombre", nom); else ocultar("filaNombre");
+
+  const td = g("tdoc"), nd = g("doc");
+  copiable("vDoc", nd ? ((TDOC[td] ? TDOC[td].split(" ")[0] : td) + " " + nd) : "");
+  document.getElementById("vDoc").title = TDOC[td] || td || "";
+  copiable("vTel", limpiaTel(g("telefono")));
+
+  /* documento que figura en la base: si NO coincide con el marcado, se avisa */
+  const dBase = g("docBase");
+  if(dBase){
+    const e = document.getElementById("vDocBase");
+    if(nd && dBase.replace(/\D/g,"") !== nd.replace(/\D/g,""))
+      e.innerHTML = dBase + ' <span class="chip alto">no coincide · verifique identidad</span>';
+    else e.innerHTML = dBase + ' <span class="chip ok">coincide</span>';
+  } else ocultar("filaDocBase");
+
+  /* teléfonos registrados: si llama desde otro número, se avisa */
+  const tBase = g("telBase");
+  if(tBase){
+    const propio = limpiaTel(g("telefono")).replace(/\D/g,"");
+    const lista = tBase.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+    const coincide = lista.some(t => t.replace(/\D/g,"").endsWith(propio) ||
+                                     propio.endsWith(t.replace(/\D/g,"")));
+    document.getElementById("vTelBase").innerHTML = lista.join(" · ") +
+      (propio && !coincide
+        ? ' <span class="chip warn">llama desde otro número</span>'
+        : '');
+  } else ocultar("filaTelBase");
+
+  /* ---- la llamada ---- */
+  const lin = buscarLinea(g("lineaTo"));
+  if(lin) document.getElementById("vLinea").innerHTML =
+      lin[0] + ' <span class="chip-linea">' + lin[1] + '</span>';
+  else if(g("lineaTo")) texto("vLinea", g("lineaTo"));
+  else ocultar("filaLinea");
+
+  const veces = parseInt(g("veces"), 10);
+  if(!isNaN(veces) && veces > 0){
+    const e = document.getElementById("vVeces");
+    if(veces === 1) e.innerHTML = '<span class="chip ok">1 · primera vez</span>';
+    else if(veces <= 3) e.innerHTML = '<span class="chip warn">'+veces+' contactos</span>';
+    else e.innerHTML = '<span class="chip alto">'+veces+' contactos · insista en resolver</span>';
+  } else ocultar("filaVeces");
+
+  const prev = buscarLinea(g("transferido"));
+  if(prev) texto("vTransf", prev[0] + " · " + prev[1]);
+  else if(g("transferido")) texto("vTransf", g("transferido"));
+  else ocultar("filaTransf");
+
+  const srv = g("service");
+  if(srv) texto("vServicio", srv); else ocultar("filaServicio");
+
+  document.getElementById("vHora").textContent =
+      new Date().toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"});
+
+  const COND = {
+    ag_no_contesta:"El agente anterior no contestó", ag_ocupado:"Agente ocupado",
+    ag_corta_normal:"El agente anterior colgó", ag_falla:"Falla en el paso al agente",
+    Time_Out:"El paciente se quedó sin responder en el IVR",
+    sin_ag_disponible:"No había agentes disponibles",
+    "sin respuesta":"Sin respuesta del agente",
+    Error_paso_agene:"Error al pasar al agente",
+    FUERA_DE_HORARIO:"Llamó fuera del horario de atención"
+  };
+  const cond = g("condicion").split("|").map(s=>s.trim()).filter(Boolean);
+  if(cond.length){
+    document.getElementById("vCondicion").innerHTML =
+      cond.map(c => '<span class="chip warn">'+(COND[c] || c.replace(/_/g," "))+'</span>').join(" ");
+  } else ocultar("filaCondicion");
+
+  const inter = g("interaccion");
+  if(inter) copiable("vInter", inter); else ocultar("filaInter");
+
+  /* ---- asegurador + chuleta ---- */
+  const a = ASEG[g("aseg")];
+  if(a){
+    texto("vAseg", a.n);
+    const p = document.getElementById("pillAseg");
+    p.textContent = "🏥 " + a.n; p.classList.remove("hidden");
+    let h = '<div class="chuleta">';
+    if(a.tel && a.tel !== "—")
+      h += 'Otros servicios → <span class="tel">'+a.tel+'</span>';
+    h += '<ul>' + a.extra.map(x=>'<li>'+x+'</li>').join('') + '</ul></div>';
+    h += '<div class="aviso">'+a.nota+'</div>';
+    document.getElementById("vChuleta").innerHTML = h;
   } else {
-    cantidadWrapper.classList.add("hidden");
-    contenedorFechas.classList.add("hidden");
-    document.getElementById("cantidad").value = "";
-    contenedorFechas.innerHTML = "";
+    ocultar("filaAseg"); ocultar("cardChuleta");
+  }
+
+  /* ---- recorrido ---- */
+  const cont = document.getElementById("vRuta");
+  const pasos = g("opcion").split("|").map(s=>s.trim()).filter(Boolean);
+  if(!pasos.length){ vacio(cont,"El IVR no reportó el recorrido"); }
+  else pasos.forEach((p,i)=>{
+    const s=document.createElement("span");
+    s.className="paso"+(i===pasos.length-1?" fin":"");
+    s.textContent = OPCIONES[p] || p.replace(/_/g," ");
+    cont.appendChild(s);
+    if(i<pasos.length-1){const f=document.createElement("span");
+      f.className="flecha";f.textContent="→";cont.appendChild(f);}
+  });
+});
+
+/* =================== generador =================== */
+let imagenPegada = null;
+const sedesInfo = {
+  "Sede Américas":{direccion:"CL 20 (Avenida de las Américas) # 43A - 32 - Bogotá D.C.",mapa:"https://maps.app.goo.gl/F71EgmnxAHW5rnng6",nota:"En esta sede NO se realiza fibra única ni prueba de Lambert."},
+  "Piso 2 - Altos del Bosque":{direccion:"Calle 134 No. 7 - 83 Torre 1 Piso 2 - Bogotá D.C.",mapa:"https://maps.app.goo.gl/zvBLNfprPDRUkX4d7"},
+  "Piso 3":{direccion:"Calle 134 No. 7 - 83 Torre 1 Piso 3 - Bogotá D.C.",mapa:"https://maps.app.goo.gl/zvBLNfprPDRUkX4d7"},
+  "Piso 5 - Forest Medical Center":{direccion:"Cra 7B Bis # 132-38 Piso 5 Ed. Forest Medical Center - Bogotá D.C.",mapa:"https://maps.app.goo.gl/pJaUU8DZiRhETN3A6"},
+  "Piso 6 - Forest Medical Center":{direccion:"Cra 7B Bis # 132-38 Piso 6 Ed. Forest Medical Center - Bogotá D.C.",mapa:"https://maps.app.goo.gl/pJaUU8DZiRhETN3A6"},
+  "Calle 26 - Edificio Elemento":{direccion:"Avenida Calle 26 (Avenida El Dorado) # 69 - 76 - Bogotá D.C.",mapa:"https://maps.app.goo.gl/duCTfW3sobBPVREG9"},
+  "Sede Caribe 1":{direccion:"Cr. 53 #68B - 13 barrio El Prado - Barranquilla",mapa:"https://maps.app.goo.gl/yDZ7d2hzodFZXCjU7"},
+  "Sede Caribe 2":{direccion:"Cra 53 # 70-112 LOCAL 1-A EDIFICIO SOMMACAL",mapa:"https://maps.app.goo.gl/4LzPNSdt7M8CQBvU6"},
+  "Atención Virtual – No debe presentarse a sede":{direccion:"Modalidad virtual. No requiere desplazamiento físico.",mapa:"#"}
+};
+function verificarEspecialidad(){
+  const esp=document.getElementById("especialidad").value;
+  const sede=document.getElementById("sede").value;
+  const w=document.getElementById("cantidadWrapper"), c=document.getElementById("contenedorFechas");
+  if(esp==="Terapia" && sede==="Sede Caribe 1"){w.classList.remove("hidden");c.classList.remove("hidden");}
+  else{w.classList.add("hidden");c.classList.add("hidden");
+       document.getElementById("cantidad").value="";c.innerHTML="";}
+  const nota=(sedesInfo[sede]||{}).nota;
+  document.getElementById("avisoSede").innerHTML =
+      nota ? '<div class="aviso">⚠️ '+nota+'</div>' : "";
+}
+function generarCamposFechas(){
+  const n=parseInt(document.getElementById("cantidad").value)||0;
+  const c=document.getElementById("contenedorFechas"); c.innerHTML="";
+  for(let i=0;i<n;i++){
+    const d=document.createElement("div"); d.className="col";
+    const l=document.createElement("label"); l.innerText=`Fecha y hora cita ${i+1}`;
+    const inp=document.createElement("input"); inp.type="datetime-local";
+    inp.classList.add("fecha-cita"); d.append(l,inp); c.appendChild(d);
   }
 }
-
-function generarCamposFechas() {
-  const cantidad = parseInt(document.getElementById("cantidad").value) || 0;
-  const contenedor = document.getElementById("contenedorFechas");
-  contenedor.innerHTML = "";
-
-  for (let i = 0; i < cantidad; i++) {
-    const div = document.createElement("div");
-    div.className = "col-6";
-
-    const label = document.createElement("label");
-    label.innerText = `Fecha y hora Cita ${i + 1}:`;
-    const input = document.createElement("input");
-    input.type = "datetime-local";
-    input.classList.add("fecha-cita");
-
-    div.appendChild(label);
-    div.appendChild(input);
-    contenedor.appendChild(div);
-  }
-}
-
-document.addEventListener("paste", function (e) {
-  const items = e.clipboardData.items;
-  for (let item of items) {
-    if (item.type.indexOf("image") !== -1) {
-      const blob = item.getAsFile();
-      const reader = new FileReader();
-      reader.onload = function (event) {
-        const img = new Image();
-        img.src = event.target.result;
-        document.getElementById("imageContainer").innerHTML = "";
-        document.getElementById("imageContainer").appendChild(img);
-        imagenPegada = img.src;
-      };
-      reader.readAsDataURL(blob);
+document.addEventListener("paste", e=>{
+  for(const item of e.clipboardData.items){
+    if(item.type.indexOf("image")!==-1){
+      const r=new FileReader();
+      r.onload=ev=>{const cont=document.getElementById("imageContainer");
+        cont.innerHTML=""; const img=new Image(); img.src=ev.target.result;
+        cont.appendChild(img); cont.classList.add("lleno"); imagenPegada=img.src;};
+      r.readAsDataURL(item.getAsFile());
     }
   }
 });
-
-function generarConfirmacion() {
-  const sede = document.getElementById("sede").value;
-  const cantidad = parseInt(document.getElementById("cantidad").value) || 0;
-  const especialidad = document.getElementById("especialidad").value;
-  const fechas = document.querySelectorAll(".fecha-cita");
-
-  if (!sede || !especialidad || !imagenPegada || 
-      (especialidad === "Terapia" && sede === "Sede Caribe 1" && (cantidad === 0 || fechas.length !== cantidad))) {
-    alert("⚠️ Por favor complete todos los campos y pegue la confirmación de la Cita.");
-    return;
+function ampliar(){
+  if(!imagenPegada) return;
+  const w=window.open("");
+  w.document.write('<title>Recordatorio de cita</title><body style="margin:0;background:#222;'
+   +'display:flex;align-items:center;justify-content:center;height:100vh">'
+   +'<img src="'+imagenPegada+'" style="max-width:100%;max-height:100%"></body>');
+}
+function generarConfirmacion(){
+  const sede=document.getElementById("sede").value;
+  const esp=document.getElementById("especialidad").value;
+  const cant=parseInt(document.getElementById("cantidad").value)||0;
+  const fechas=document.querySelectorAll(".fecha-cita");
+  const necesita=(esp==="Terapia" && sede==="Sede Caribe 1");
+  if(!sede||!esp||!imagenPegada||(necesita&&(cant===0||fechas.length!==cant))){
+    alert("⚠️ Complete la sede, la especialidad y pegue el recordatorio de la cita."); return;}
+  const info=sedesInfo[sede]||{};
+  let lista="";
+  if(necesita){
+    lista=Array.from(fechas).map((el,i)=>{
+      const f=new Date(el.value);
+      if(isNaN(f)) return `• Cita ${i+1}: fecha no válida`;
+      return `• Cita ${i+1}: `+f.toLocaleString("es-CO",{weekday:"long",year:"numeric",
+        month:"long",day:"numeric",hour:"numeric",minute:"2-digit"});}).join("<br>");
   }
-
-  const direccion = sedesInfo[sede]?.direccion || "Dirección no disponible";
-  const mapa = sedesInfo[sede]?.mapa || "#";
-
-  let listaFechas = "";
-  if (especialidad === "Terapia" && sede === "Sede Caribe 1") {
-    listaFechas = Array.from(fechas).map((el, i) => {
-      const fecha = new Date(el.value);
-      if (isNaN(fecha)) return `• Cita ${i + 1}: Fecha no válida`;
-      const texto = fecha.toLocaleString("es-CO", {
-        weekday: "long", year: "numeric", month: "long", day: "numeric",
-        hour: "numeric", minute: "2-digit"
-      });
-      return `• Cita ${i + 1}: ${texto}`;
-    }).join("<br>");
-  }
-
-  const html = `
-    <p> A continuación, le compartimos la confirmación de su cita para que pueda asistir:</p>
+  document.getElementById("output").innerHTML=`
+    <p>A continuación le compartimos la confirmación de su cita:</p>
     <p>📍 <strong>Sede:</strong> ${sede}</p>
-    <p>🏢 <strong>Dirección:</strong> ${direccion}</p>
-    <p>🌐 <strong>¿Cómo llegar?:</strong> <a href="${mapa}" target="_blank">${mapa}</a></p>
-    ${(especialidad === "Terapia" && sede === "Sede Caribe 1") ? `<p>📅 <strong>Fechas y horas de las citas:</strong><br>${listaFechas}</p>` : ""} 
-    <p>🩺 <strong>Especialidad:</strong> ${especialidad}</p>
-    <p>🖼️ <strong>Confirmación de Cita:</strong></p>
-    <img src="${imagenPegada}" style="max-width:100%; max-height:300px; object-fit:contain; border:1px solid #ccc;">
-  `;
-
-  document.getElementById("output").innerHTML = html;
+    <p>🏢 <strong>Dirección:</strong> ${info.direccion||"No disponible"}</p>
+    <p>🌐 <strong>¿Cómo llegar?:</strong> <a href="${info.mapa||"#"}" target="_blank">${info.mapa||""}</a></p>
+    ${necesita?`<p>📅 <strong>Fechas y horas:</strong><br>${lista}</p>`:""}
+    <p>🩺 <strong>Especialidad:</strong> ${esp}</p>
+    <p>🖼️ <strong>Confirmación de cita:</strong></p>
+    <img src="${imagenPegada}" style="max-width:100%;max-height:300px;object-fit:contain;border:1px solid #ccc;border-radius:6px">`;
 }
-
-function copiarConfirmacion() {
-  const output = document.getElementById("output");
-  const range = document.createRange();
-  range.selectNode(output);
-  const selection = window.getSelection();
-  selection.removeAllRanges();
-  selection.addRange(range);
-  document.execCommand("copy");
-  selection.removeAllRanges();
-  alert("✅ Confirmación copiada por favor envíela al usuario.");
+function copiarConfirmacion(){
+  const o=document.getElementById("output");
+  if(!o.innerHTML.trim()){alert("Primero genere la confirmación.");return;}
+  const r=document.createRange(); r.selectNode(o);
+  const s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  document.execCommand("copy"); s.removeAllRanges();
+  alert("✅ Confirmación copiada. Por favor envíela al usuario.");
 }
-
-function limpiarCampos() {
-  document.getElementById("sede").value = "";
-  document.getElementById("cantidad").value = "";
-  document.getElementById("especialidad").value = "";
-  document.getElementById("contenedorFechas").innerHTML = "";
-  document.getElementById("imageContainer").innerHTML = "Pega aquí tu imagen";
-  document.getElementById("output").innerHTML = "";
-  imagenPegada = null;
-  verificarEspecialidad();
+function limpiarCampos(){
+  ["sede","cantidad","especialidad"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("contenedorFechas").innerHTML="";
+  const c=document.getElementById("imageContainer");
+  c.innerHTML="Haga clic aquí y pegue con Ctrl + V"; c.classList.remove("lleno");
+  document.getElementById("output").innerHTML="";
+  document.getElementById("avisoSede").innerHTML="";
+  imagenPegada=null; verificarEspecialidad();
 }
-
-// 🚨 Mostrar popups
-setTimeout(() => { document.getElementById("popup5").style.display = "block"; }, 300000); // 5 min
-setTimeout(() => { document.getElementById("popup7").style.display = "block"; }, 420000); // 7 min
-setTimeout(() => { document.getElementById("popup10").style.display = "block"; }, 600000); // 10 min
-setTimeout(() => { document.getElementById("popup12").style.display = "flex"; }, 720000); // 12 min
-
-function cerrarPopup(id) {
-  document.getElementById(id).style.display = "none";
-}
-
-// Llenar campos desde URL
-window.addEventListener("DOMContentLoaded", () => {
-  const params = new URLSearchParams(window.location.search);
-  const servicio = params.get("service");
-  const tipoDoc = params.get("tdoc");
-  const documento = params.get("doc");
-  const telefono = params.get("telefono");
-
-  if (servicio) document.getElementById("servicio").value = decodeURIComponent(servicio);
-  if (tipoDoc) document.getElementById("tipoDocumento").value = decodeURIComponent(tipoDoc);
-  if (documento) document.getElementById("numeroDocumento").value = decodeURIComponent(documento);
-  if (telefono) document.getElementById("telefono").value = decodeURIComponent(telefono);
-});
+setTimeout(()=>document.getElementById("popup5").style.display="block",300000);
+setTimeout(()=>document.getElementById("popup7").style.display="block",420000);
+setTimeout(()=>document.getElementById("popup10").style.display="block",600000);
+setTimeout(()=>document.getElementById("popup12").style.display="flex",720000);
+function cerrarPopup(id){document.getElementById(id).style.display="none";}
 </script>
 </body>
 </html>
