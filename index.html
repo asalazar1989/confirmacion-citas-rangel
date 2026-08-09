@@ -15,14 +15,20 @@
      doc        número de documento marcado en el IVR
      telefono   $(item.from)
      service    $(service.name)  -> skill / servicio
-     nombre     $(idname)        -> nombre hallado en la base de contactos
-     apellido   $(idapellido)
+     nombre     $(idname)        -> = $(buscaContacto.first_name). REQUIERE corregir
+                                    el bloque "Búsqueda de objeto" del escenario:
+                                    buscar phones.phone con $(item.from), no con
+                                    $(telefono) (variable que nunca se llena)
+     docBase    $(idapellido)    -> documento guardado en la ficha (last_name)
      aseg       $(aseg)          -> compensar_PBS | compensar_PAC |
                                     Compensar_Prepa | Sanitas | colmena | atgeneral
      opcion     $(opcion)        -> recorrido acumulado, separado por |
      condicion  $(condicion)
      lineaTo      $(item.to)                    -> a qué línea llamó
-     transferido  $(item.priorTo)               -> línea previa, si fue transferido
+     transferido    $(item.priorTo)             -> línea previa, si fue transferido
+     transfNombre   $(user.firstName)           -> POR COMPROBAR: asesor que transfiere
+     transfApellido $(user.lastName)            -> POR COMPROBAR
+     transfUsuario  $(user.loginId)             -> POR COMPROBAR (ej. asalazarg)
      veces        $(result.total)               -> veces que ese teléfono ha contactado
                                                   (viene del DBAccess "ContarTotalLlamadas"
                                                    contra Consulta_BP3; hoy SOLO existe en
@@ -81,6 +87,15 @@ body{margin:0;padding:14px;font-family:"Segoe UI",system-ui,-apple-system,Arial,
   padding:3px 9px;border-radius:99px;font-size:12px;font-weight:600}
 .paso.fin{background:var(--azul);color:#fff;border-color:var(--azul)}
 .flecha{color:#9fb3c4;font-size:12px}
+
+/* barra de recorrido: una sola línea, arriba de todo */
+.rutaBar{display:flex;align-items:center;gap:12px;background:var(--blanco);
+  border:1px solid var(--borde);border-radius:var(--radio);box-shadow:var(--sombra);
+  padding:8px 14px;margin-top:12px}
+.rutaBar .rutaLbl{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--azul);
+  text-transform:uppercase;letter-spacing:.5px}
+.rutaBar .ruta{flex:1;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+.rutaBar .paso,.rutaBar .flecha{flex:0 0 auto;white-space:nowrap}
 
 /* chuleta del asegurador */
 .chuleta{border-left:3px solid var(--azul2);background:#f6fafd;padding:10px 12px;border-radius:6px}
@@ -164,6 +179,12 @@ details.plegable li{margin-bottom:4px}
     <span class="lema">Dedicados a la Excelencia</span>
   </div>
 
+  <!-- recorrido en una sola línea, visible de entrada -->
+  <div class="rutaBar">
+    <span class="rutaLbl">🗺️ Recorrido en el IVR</span>
+    <div class="ruta" id="vRuta"></div>
+  </div>
+
   <div class="grid">
 
     <!-- ============ IZQUIERDA: lo que trae el IVR ============ -->
@@ -197,6 +218,8 @@ details.plegable li{margin-bottom:4px}
             <span class="v" id="vCrono" style="font-variant-numeric:tabular-nums"></span></div>
           <div class="dato" id="filaVeces"><span class="k">Veces que ha contactado</span>
             <span class="v" id="vVeces"></span></div>
+          <div class="dato" id="filaTransfPor"><span class="k">Transferida por</span>
+            <span class="v" id="vTransfPor"></span></div>
           <div class="dato" id="filaTransf"><span class="k">Transferido desde</span>
             <span class="v" id="vTransf"></span></div>
           <div class="dato" id="filaServicio"><span class="k">Servicio / skill</span>
@@ -210,10 +233,6 @@ details.plegable li{margin-bottom:4px}
         </div>
       </div>
 
-      <div class="card">
-        <h2>🗺️ Recorrido en el IVR</h2>
-        <div class="body"><div class="ruta" id="vRuta"></div></div>
-      </div>
     </div>
 
     <!-- ============ DERECHA: generador y apoyos ============ -->
@@ -419,6 +438,7 @@ const DEMO = {
   nombre:"ALIRIO", apellido:"SALAZAR GARZON", aseg:"Sanitas",
   docBase:"1010184016", telBase:"3102137293, 6017456047",
   lineaTo:"17940567", transferido:"15555555", veces:"3", espera:"135",
+  transfNombre:"CARLOS", transfApellido:"RANGEL", transfUsuario:"crangel",
   interaccion:"A1B2C3D4-5678-90EF", condicion:"ag_no_contesta",
   opcion:"|ASEGURADORA|ASEGURADORA_SANITAS|MOTIVO_COMUNICACION|AGENDAMIENTO|ELECTRODIAGNOSTICO"
 };
@@ -496,6 +516,15 @@ window.addEventListener("DOMContentLoaded", () => {
     else if(veces <= 3) e.innerHTML = '<span class="chip warn">'+veces+' contactos</span>';
     else e.innerHTML = '<span class="chip alto">'+veces+' contactos · insista en resolver</span>';
   } else ocultar("filaVeces");
+
+  /* quién transfirió: nombre del asesor y su usuario del sistema */
+  const quien = [g("transfNombre"), g("transfApellido")].filter(Boolean).join(" ").trim();
+  const quienUser = g("transfUsuario");
+  if(quien || quienUser){
+    document.getElementById("vTransfPor").innerHTML =
+      (quien || "Asesor") +
+      (quienUser ? ' <span class="chip-linea">'+quienUser+'</span>' : '');
+  } else ocultar("filaTransfPor");
 
   const prev = buscarLinea(g("transferido"));
   if(prev) texto("vTransf", prev[0] + " · " + prev[1]);
