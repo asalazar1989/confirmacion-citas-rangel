@@ -27,6 +27,7 @@
                                                   (viene del DBAccess "ContarTotalLlamadas"
                                                    contra Consulta_BP3; hoy SOLO existe en
                                                    RANGEL_V2_COMUNICARSE_AGENTE)
+     espera       segundos que el paciente esperó antes de ser atendido
      interaccion  $(item.globalInteractionId)   -> n.º de interacción, para reportes
      sesion       $(sessionId)
    =================================================================== */
@@ -190,6 +191,10 @@ details.plegable li{margin-bottom:4px}
         <div class="body">
           <div class="dato" id="filaLinea"><span class="k">Línea que marcó</span>
             <span class="v" id="vLinea"></span></div>
+          <div class="dato" id="filaEspera"><span class="k">Esperó en el IVR / cola</span>
+            <span class="v" id="vEspera"></span></div>
+          <div class="dato"><span class="k">Lleva en gestión</span>
+            <span class="v" id="vCrono" style="font-variant-numeric:tabular-nums"></span></div>
           <div class="dato" id="filaVeces"><span class="k">Veces que ha contactado</span>
             <span class="v" id="vVeces"></span></div>
           <div class="dato" id="filaTransf"><span class="k">Transferido desde</span>
@@ -208,11 +213,6 @@ details.plegable li{margin-bottom:4px}
       <div class="card">
         <h2>🗺️ Recorrido en el IVR</h2>
         <div class="body"><div class="ruta" id="vRuta"></div></div>
-      </div>
-
-      <div class="card" id="cardChuleta">
-        <h2>💡 Recuerde para este asegurador</h2>
-        <div class="body"><div id="vChuleta"></div></div>
       </div>
     </div>
 
@@ -272,6 +272,11 @@ details.plegable li{margin-bottom:4px}
 
           <div contenteditable="true" id="output"></div>
         </div>
+      </div>
+
+      <div class="card" id="cardChuleta">
+        <h2>💡 Recuerde para este asegurador</h2>
+        <div class="body"><div id="vChuleta"></div></div>
       </div>
 
       <details class="plegable">
@@ -413,7 +418,7 @@ const DEMO = {
   tdoc:"CC", doc:"1010184016", telefono:"573102137293", service:"CH_MODELO_OA",
   nombre:"ALIRIO", apellido:"SALAZAR GARZON", aseg:"Sanitas",
   docBase:"1010184016", telBase:"3102137293, 6017456047",
-  lineaTo:"17940567", transferido:"15555555", veces:"3",
+  lineaTo:"17940567", transferido:"15555555", veces:"3", espera:"135",
   interaccion:"A1B2C3D4-5678-90EF", condicion:"ag_no_contesta",
   opcion:"|ASEGURADORA|ASEGURADORA_SANITAS|MOTIVO_COMUNICACION|AGENDAMIENTO|ELECTRODIAGNOSTICO"
 };
@@ -445,9 +450,11 @@ window.addEventListener("DOMContentLoaded", () => {
     document.querySelector(".wrap").insertBefore(b, document.querySelector(".grid"));
   }
 
-  /* ---- paciente ---- */
+  /* ---- paciente ----
+     Estas filas NO se ocultan: si el sistema no trajo el dato, se muestra en
+     gris para que el asesor sepa que ahí falta información y la pregunte.   */
   const nom = [g("nombre"), g("apellido")].filter(Boolean).join(" ").trim();
-  if(nom) texto("vNombre", nom); else ocultar("filaNombre");
+  texto("vNombre", nom, "No lo identificó el sistema · pregúntelo");
 
   const td = g("tdoc"), nd = g("doc");
   copiable("vDoc", nd ? ((TDOC[td] ? TDOC[td].split(" ")[0] : td) + " " + nd) : "");
@@ -456,25 +463,24 @@ window.addEventListener("DOMContentLoaded", () => {
 
   /* documento que figura en la base: si NO coincide con el marcado, se avisa */
   const dBase = g("docBase");
+  const eDB = document.getElementById("vDocBase");
   if(dBase){
-    const e = document.getElementById("vDocBase");
     if(nd && dBase.replace(/\D/g,"") !== nd.replace(/\D/g,""))
-      e.innerHTML = dBase + ' <span class="chip alto">no coincide · verifique identidad</span>';
-    else e.innerHTML = dBase + ' <span class="chip ok">coincide</span>';
-  } else ocultar("filaDocBase");
+      eDB.innerHTML = dBase + ' <span class="chip alto">no coincide · verifique identidad</span>';
+    else eDB.innerHTML = dBase + ' <span class="chip ok">coincide</span>';
+  } else vacio(eDB, "No registrado");
 
   /* teléfonos registrados: si llama desde otro número, se avisa */
   const tBase = g("telBase");
+  const eTB = document.getElementById("vTelBase");
   if(tBase){
     const propio = limpiaTel(g("telefono")).replace(/\D/g,"");
     const lista = tBase.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
     const coincide = lista.some(t => t.replace(/\D/g,"").endsWith(propio) ||
                                      propio.endsWith(t.replace(/\D/g,"")));
-    document.getElementById("vTelBase").innerHTML = lista.join(" · ") +
-      (propio && !coincide
-        ? ' <span class="chip warn">llama desde otro número</span>'
-        : '');
-  } else ocultar("filaTelBase");
+    eTB.innerHTML = lista.join(" · ") +
+      (propio && !coincide ? ' <span class="chip warn">llama desde otro número</span>' : '');
+  } else vacio(eTB, "No registrados");
 
   /* ---- la llamada ---- */
   const lin = buscarLinea(g("lineaTo"));
@@ -499,8 +505,28 @@ window.addEventListener("DOMContentLoaded", () => {
   const srv = g("service");
   if(srv) texto("vServicio", srv); else ocultar("filaServicio");
 
+  /* tiempo que el paciente esperó antes de que le contestaran */
+  const seg = parseInt(g("espera"), 10);
+  if(!isNaN(seg) && seg > 0){
+    const m = Math.floor(seg/60), s = seg%60;
+    const txt = (m ? m+" min "+s+" s" : s+" s");
+    document.getElementById("vEspera").innerHTML = seg > 180
+      ? txt + ' <span class="chip alto">esperó mucho</span>'
+      : (seg > 90 ? txt + ' <span class="chip warn">espera larga</span>' : txt);
+  } else ocultar("filaEspera");
+
   document.getElementById("vHora").textContent =
       new Date().toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"});
+
+  /* cronómetro en vivo de la gestión actual */
+  const inicio = Date.now(), eCr = document.getElementById("vCrono");
+  (function tic(){
+    const t = Math.floor((Date.now()-inicio)/1000);
+    const mm = String(Math.floor(t/60)).padStart(2,"0"), ss = String(t%60).padStart(2,"0");
+    eCr.textContent = mm+":"+ss;
+    eCr.style.color = t >= 600 ? "var(--rojo)" : (t >= 300 ? "var(--alerta)" : "");
+    setTimeout(tic, 1000);
+  })();
 
   const COND = {
     ag_no_contesta:"El agente anterior no contestó", ag_ocupado:"Agente ocupado",
