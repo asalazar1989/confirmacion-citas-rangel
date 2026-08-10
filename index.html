@@ -305,10 +305,37 @@ details.plegable li{margin-bottom:4px}
             <li><strong>Saludo:</strong> "Bienvenido a Rangel Rehabilitación, le habla [su nombre]. ¿Con quién tengo el gusto?"</li>
             <li><strong>Verificación:</strong> confirme tipo y número de documento — <em>ya vienen del IVR, solo confírmelos</em>.</li>
             <li><strong>Motivo:</strong> "¿En qué podemos ayudarle hoy?" — el recorrido de la izquierda le indica qué venía buscando.</li>
-            <li><strong>Valide agenda</strong> en SAP o CNT. Si no hay disponibilidad, ofrezca lista de contacto posterior.</li>
+            <li><strong>Valide</strong> en SAP o en CNT.</li>
             <li><strong>Confirme la gestión:</strong> repita fecha, hora y sede, y envíe la confirmación.</li>
             <li><strong>Cierre:</strong> "Gracias por contactarnos. Que tenga un excelente día."</li>
           </ol>
+        </div>
+      </details>
+
+      <details class="plegable">
+        <summary>📋 Preparaciones para procedimientos</summary>
+        <div class="cont">
+          <p style="margin:6px 0"><strong>Clínica del dolor — guía ecográfica y fluoroscopia:</strong></p>
+          <ul>
+            <li>Llegar 30 minutos antes.</li>
+            <li>Ropa cómoda, sin joyas, sin esmalte, sin maquillaje.</li>
+            <li>Disponibilidad de 2 horas mínimo.</li>
+            <li>Acompañante mayor de edad obligatorio.</li>
+            <li>Si es en la tarde: dieta suave y 6 horas de ayuno antes.</li>
+            <li>No conducir el día del procedimiento.</li>
+          </ul>
+          <p style="margin:10px 0 6px"><strong>Fisiatría — Dr. Omar Guardias:</strong></p>
+          <ul>
+            <li>Llegar 20 minutos antes.</li>
+            <li>2 horas de ayuno.</li>
+            <li>Ropa cómoda y acompañante mayor de edad obligatorio.</li>
+            <li>No suspender tensión, diabetes ni psiquiátricos.</li>
+            <li>Anticoagulantes: autorización escrita del médico tratante.</li>
+            <li>Sin antiinflamatorios 5 días antes.</li>
+          </ul>
+          <p style="margin:10px 0 0;font-size:12px;color:var(--suave)">
+            Estas dos son las que están documentadas hoy. Si hay más preparaciones
+            para agregar (electrodiagnóstico, terapias, etc.), me las envía y las sumo.</p>
         </div>
       </details>
 
@@ -317,7 +344,7 @@ details.plegable li{margin-bottom:4px}
         <div class="cont">
           <p style="margin:6px 0"><strong>Horario:</strong> lunes a viernes 7:00 a.m.–6:00 p.m. · sábados 7:00 a.m.–1:00 p.m. · domingos y festivos cerrado.</p>
           <p style="margin:6px 0"><strong>Historia clínica:</strong> historiasclinicas@rangelrehabilitacion.com.co, asunto <em>HISTORIA CLINICA</em>, con fotocopia del documento y el formato diligenciado.</p>
-          <p style="margin:6px 0"><strong>PQRSF:</strong> info@rangelrehabilitacion.com.co</p>
+          <p style="margin:6px 0"><strong>Canal Resuelve:</strong> 601 742 0392</p>
           <p style="margin:6px 0"><strong>Líneas:</strong> 601 745 6047 · 601 756 2389 · 601 756 2403 · Sanitas 601 794 0567 · ARL/Ecopetrol 601 328 9097 · Barranquilla (605) 322 8824 / (605) 400 0007</p>
         </div>
       </details>
@@ -343,9 +370,9 @@ const TDOC = {CC:"Cédula de ciudadanía",TI:"Tarjeta de identidad",RC:"Registro
 
 /* los 60 códigos que usa el IVR, traducidos a lenguaje del asesor */
 const OPCIONES = {
-  AGENDAMIENTO:"Agendamiento", AGENDAMIENTO_REPROGRAMA:"Agendar o reprogramar",
-  AGENDA_REPROGRAMA:"Reprogramación", CANCELAR:"Cancelación",
-  CANCELA_REPROGRAMA:"Cancelar o reprogramar", MOTIVO_COMUNICACION:"Motivo de la llamada",
+  AGENDAMIENTO:"Agendamiento de citas", AGENDAMIENTO_REPROGRAMA:"Agendamiento de citas",
+  AGENDA_REPROGRAMA:"Agendamiento de citas", CANCELAR:"Cancelación",
+  CANCELA_REPROGRAMA:"Cancelar o reprogramar cita", MOTIVO_COMUNICACION:"Motivo de la llamada",
   SOLICITUD:"Solicitud", COMUNICARSE:"Comunicarse con un agente",
   USUARIO:"Identificación de usuario", PLAN:"Selección de plan",
   ASEGURADORA:"Selección de aseguradora",
@@ -449,12 +476,28 @@ const g = k => (MODO_DEMO ? (DEMO[k] || "") : (P.get(k) || "")).trim();
 const limpiaTel = t => t.replace(/^whatsapp:/i,"").replace(/^57(?=\d{10})/,"");
 const vacio = (el,txt) => { el.innerHTML = '<span class="vacio">'+txt+'</span>'; };
 function texto(id,v,tv){const e=document.getElementById(id); if(v) e.textContent=v; else vacio(e,tv||"Sin dato");}
+function copiarTexto(v){
+  // navigator.clipboard puede fallar dentro del panel embebido de Bright
+  // Pattern (contexto no seguro o sin permiso). Si falla, se usa el metodo
+  // clasico: un textarea oculto + document.execCommand('copy').
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(v).catch(() => copiarConTextarea(v));
+  }
+  return copiarConTextarea(v);
+}
+function copiarConTextarea(v){
+  const ta=document.createElement("textarea");
+  ta.value=v; ta.style.position="fixed"; ta.style.left="-9999px";
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand("copy"); }catch(e){}
+  document.body.removeChild(ta);
+}
 function copiable(id,v){
   const e=document.getElementById(id);
   if(!v){vacio(e,"Sin dato");return;}
   e.innerHTML=""; e.append(document.createTextNode(v));
   const b=document.createElement("button"); b.className="copiar"; b.textContent="copiar";
-  b.onclick=()=>{navigator.clipboard.writeText(v);b.textContent="✓";
+  b.onclick=()=>{copiarTexto(v);b.textContent="✓";
                  setTimeout(()=>b.textContent="copiar",1200);};
   e.appendChild(b);
 }
@@ -502,10 +545,11 @@ window.addEventListener("DOMContentLoaded", () => {
       (propio && !coincide ? ' <span class="chip warn">llama desde otro número</span>' : '');
   } else vacio(eTB, "No registrados");
 
-  /* ---- la llamada ---- */
+  /* ---- la llamada ----
+     Solo el numero de la linea. La etiqueta interna (Atencion general,
+     Modelo OA, etc.) generaba confusion y se quito.                    */
   const lin = buscarLinea(g("lineaTo"));
-  if(lin) document.getElementById("vLinea").innerHTML =
-      lin[0] + ' <span class="chip-linea">' + lin[1] + '</span>';
+  if(lin) texto("vLinea", lin[0]);
   else if(g("lineaTo")) texto("vLinea", g("lineaTo"));
   else ocultar("filaLinea");
 
